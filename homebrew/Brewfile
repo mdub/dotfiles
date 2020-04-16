@@ -1,0 +1,18 @@
+brew "asdf"
+brew "exa"
+brew "fd"
+brew "hub"
+brew "joe"
+brew "most"
+brew "ripgrep"
+
+tap "homebrew/cask"
+
+cask "dropbox"
+cask "font-anonymous-pro"
+cask "font-hack"
+cask "font-source-code-pro"
+cask "istat-menus"
+cask "launchbar"
+cask "visual-studio-code"
+cask "workflowy"
