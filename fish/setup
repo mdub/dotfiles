@@ -1,0 +1,5 @@
+#! /bin/sh
+
+test -e ~/.config/fish || ln -s ~/.dotfiles/fish/config ~/.config/fish
+
+# TODO: do something clever if link is wrong
