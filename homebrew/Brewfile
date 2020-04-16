@@ -8,6 +8,7 @@ brew "ripgrep"
 
 tap "homebrew/cask"
 
+cask "dash"
 cask "dropbox"
 cask "font-anonymous-pro"
 cask "font-hack"
