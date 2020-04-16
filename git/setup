@@ -2,3 +2,6 @@
 
 git config --global core.excludesfile ~/.dotfiles/git/.gitignore
 git config --global include.path ~/.dotfiles/git/.gitconfig
+
+touch ~/.gitignore
+sort -u ~/.gitignore $(dirname $0)/.gitignore > ~/.gitignore
