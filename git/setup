@@ -1,7 +1,11 @@
 #! /bin/sh
 
-git config --global core.excludesfile ~/.dotfiles/git/.gitignore
+set -e
+
+git config --global core.excludesfile ~/.gitignore
 git config --global include.path ~/.dotfiles/git/.gitconfig
 
 touch ~/.gitignore
-sort -u ~/.gitignore $(dirname $0)/.gitignore > ~/.gitignore
+sort -u ~/.gitignore $(dirname $0)/.gitignore > /tmp/$$.gitignore && mv /tmp/$$.gitignore ~/.gitignore
+
+
