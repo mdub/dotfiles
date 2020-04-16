@@ -1,0 +1,31 @@
+[core]
+	editor = code --wait
+	pager = less -RS
+
+[alias]
+  amend = commit --amend --no-edit
+  b = branch
+  ci = commit
+  co = checkout
+  # l = log --oneline --decorate --graph
+  l = log --graph --pretty='%C(auto) %h %d %s %C(blue)(%cn, %cd)'
+  s = status
+  prb = pull --rebase
+  qpush = push --no-verify
+  cleanup = !git branch --merged | grep -v '\\*\\|master\\|develop' | xargs -n 1 git branch -d
+  cu = cleanup
+  rbi = rebase --interactive
+  reset-to-upstream = reset --hard @{u}
+
+[user]
+	name = Mike Williams
+	email = mdub@dogbiscuit.org
+
+[url "https://github.com/"]
+	insteadof = git@github.com:
+
+[rebase]
+	autoStash = true
+
+[log]
+	date = iso-local
