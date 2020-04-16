@@ -1,0 +1,3 @@
+#! /bin/sh
+
+xargs -L1 code --install-extension < $(dirname $0)/extensions.ls
