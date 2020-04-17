@@ -1,0 +1,6 @@
+#! /usr/bin/env ruby
+
+file = ARGV.first || '.'
+args = [file]
+args.unshift("-w") unless File.directory?(file)
+exec("code", *args)

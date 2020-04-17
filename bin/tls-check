@@ -1,0 +1,27 @@
+#! /usr/bin/env ruby
+
+require 'clamp'
+
+Clamp do
+
+  parameter "HOST", "host to check"
+
+  self.default_subcommand = "cert"
+
+  subcommand "cert", "display server certificate" do
+
+    def execute
+      exec("openssl s_client -verify 3 -connect #{host}:443 -servername #{host} < /dev/null | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' | openssl x509 -noout -text")
+    end
+
+  end
+
+  subcommand "chain", "check validity" do
+
+    def execute
+      exec("openssl s_client -showcerts -verify 3 -connect #{host}:443 -servername #{host} < /dev/null")
+    end
+
+  end
+
+end

@@ -1,0 +1,10 @@
+#! /bin/bash
+#
+# Edit STDIN, before passing on to STDOUT
+
+tmpfile=`mktemp -t tap`
+trap "rm -f $tmpfile" EXIT
+
+cat > $tmpfile
+${EDITOR?} $tmpfile
+cat $tmpfile
