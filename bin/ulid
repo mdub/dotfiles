@@ -1,0 +1,19 @@
+#! /usr/bin/env ruby
+
+require "clamp"
+require "time"
+require "ulid"
+
+Clamp do
+
+  parameter "[TIME]", "time string", :default => "now", &Time.method(:parse)
+
+  def execute
+    puts ULID.generate(time)
+  end
+
+  def default_time
+    Time.now
+  end
+
+end

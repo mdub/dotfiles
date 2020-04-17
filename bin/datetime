@@ -1,0 +1,46 @@
+#! /usr/bin/env ruby
+
+require 'chronic' rescue LoadError
+require 'clamp'
+require 'time'
+
+Clamp do
+
+  option %w(-U --utc --gmt), :flag, "convert to UTC"
+
+  option %w(-L --local), :flag, "convert to local time" 
+
+  parameter "[TIME]", "date/time string" do |arg|
+    parse_timestamp(arg)
+  end
+
+  def execute
+    ts = time || Time.now
+    puts convert(ts).iso8601
+  end
+
+  private
+
+  if defined?(Chronic)
+
+    def parse_timestamp(arg)
+      Chronic.parse(arg).tap do |t|
+        raise ArgumentError, "invalid format: #{arg.inspect}" if t.nil?
+      end
+    end
+
+  else
+
+    def parse_timestamp(arg)
+      Time.parse(arg)
+    end
+
+  end
+
+  def convert(ts)
+    return ts.utc if utc?
+    return ts.localtime if local?
+    ts
+  end
+
+end
