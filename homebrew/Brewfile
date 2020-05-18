@@ -8,6 +8,7 @@ brew "most"
 brew "ripgrep"
 
 tap "homebrew/cask"
+tap "homebrew/cask-fonts"
 
 cask "dash"
 cask "dropbox"
