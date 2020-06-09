@@ -1,6 +1,7 @@
 brew "asdf"
 brew "exa"
 brew "fd"
+brew "fish"
 brew "hub"
 brew "ipcalc"
 brew "joe"
