@@ -1,4 +1,5 @@
 brew "asdf"
+brew "entr"
 brew "exa"
 brew "fd"
 brew "fish"
