@@ -1,3 +1,4 @@
+
 brew "asdf"
 brew "entr"
 brew "exa"
@@ -20,7 +21,7 @@ cask "finicky"
 cask "font-anonymous-pro"
 cask "font-hack"
 cask "font-source-code-pro"
-cask "google-chrome"
+cask "google-chrome" unless File.directory?("/Applications/Google Chrome.app")
 cask "istat-menus"
 cask "launchbar"
 cask "rq"
