@@ -1,5 +1,8 @@
-#! /bin/sh
+#! /usr/bin/env fish
 
-test -e ~/.config/fish || ln -s ~/.dotfiles/fish/config ~/.config/fish
+# Install fisher
+type -q fisher; or curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
+source ~/.config/fish/functions/fisher.fish
 
-# TODO: do something clever if link is wrong
+# Add my stuff
+fisher add ~/.dotfiles/fish/fish-mdub
