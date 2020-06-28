@@ -14,9 +14,11 @@ brew "ripgrep"
 tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 
+is_square = File.directory?("#{ENV["HOME"]}/Development/config_files")
+
 cask "dash"
 cask "docker"
-cask "dropbox"
+cask "dropbox" unless is_square
 cask "finicky"
 cask "font-anonymous-pro"
 cask "font-hack"
