@@ -1,0 +1,23 @@
+#! /usr/bin/env ruby
+
+git_url = `git config --get remote.origin.url`.chomp
+exit 1 unless $?.exitstatus.zero?
+
+case git_url 
+when %r{^https://([\w.]+)/(.*?)(.git)?$}
+    host = $1
+    path = $2
+when %r{^ssh://git@([\w.]+)/(.*?)(.git)?$}
+    host = $1
+    path = $2
+else
+    $stderr.puts "unrecognised git url"
+end
+
+case host
+when "git.sqcorp.co"
+    project, repo = path.split("/",2)
+    puts "https://#{host}/projects/#{project}/repos/#{repo}"
+else
+    puts "https://#{host}/#{path}"
+end
