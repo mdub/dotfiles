@@ -3,6 +3,9 @@
 git_url = `git config --get remote.origin.url`.chomp
 exit 1 unless $?.exitstatus.zero?
 
+branch = `git rev-parse --abbrev-ref HEAD`.chomp
+prefix = ENV.fetch("GIT_PREFIX") { `git rev-parse --show-prefix`.chomp }
+
 case git_url 
 when %r{^https://([\w.]+)/(.*?)(.git)?$}
     host = $1
@@ -17,7 +20,7 @@ end
 case host
 when "git.sqcorp.co"
     project, repo = path.split("/",2)
-    puts "https://#{host}/projects/#{project}/repos/#{repo}"
+    puts "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
 else
-    puts "https://#{host}/#{path}"
+    puts "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
 end

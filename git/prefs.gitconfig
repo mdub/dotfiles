@@ -16,6 +16,7 @@
     cu = cleanup
     rbi = rebase --interactive
     reset-to-upstream = reset --hard @{u}
+    www = ! open "`git-web-url`"
 
 [url "https://github.com/"]
 	insteadof = git@github.com:
