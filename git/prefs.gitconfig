@@ -12,6 +12,7 @@
 	l = log --graph --pretty='%C(auto) %h %d %s %C(blue)(%cn, %cd)'
 	prb = pull --rebase
 	qpush = push --no-verify
+	qs = status -uno
 	rbi = rebase --interactive
 	reset-to-upstream = reset --hard @{u}
 	s = status
