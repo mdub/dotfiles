@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+ls -lF $(which $1) | sed -n 's/^.*\/Cellar\/\([^\/]\{1,\}\)\/.*$/\1/ p'
