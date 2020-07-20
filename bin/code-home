@@ -48,10 +48,15 @@ Clamp do
 
   subcommand "move", "Move directory to a logical place" do
 
+    option %w(-l --link), :flag, "replace existing directory with a symlink"
+
     parameter "DIR", "project directory"
 
     def execute
       source = full_dir
+      unless File.directory?(source)
+        signal_error "#{source.inspect} is not a directory"
+      end
       target = logical_place_for(origin_url_of(dir))
       if source == target
         puts "No need to move #{source.inspect}"
@@ -60,9 +65,11 @@ Clamp do
       if File.exist?(target)
         signal_error "Target already exists: #{target.inspect}"
       end
-      puts "Moving #{source} to #{target}"
       FileUtils.mkdir_p(File.dirname(target))
-      FileUtils.mv(source, target)
+      FileUtils.mv(source, target, verbose: true)
+      if link?
+        FileUtils.symlink(target, source, verbose: true) 
+      end
     end
 
     private
