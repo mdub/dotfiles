@@ -11,7 +11,7 @@ Clamp do
   option %w(-L --local), :flag, "convert to local time" 
 
   parameter "[TIME]", "date/time string" do |arg|
-    parse_timestamp(arg)
+    parse_time(arg)
   end
 
   def execute
@@ -21,9 +21,20 @@ Clamp do
 
   private
 
+  def parse_time(arg)
+    case arg
+    when /^\d{10}$/
+      Time.at(Integer(arg))
+    when /^\d{13}$/
+      Time.at(Float(arg) / 1000)
+    else
+      parse_time_string(arg)
+    end
+  end
+
   if defined?(Chronic)
 
-    def parse_timestamp(arg)
+    def parse_time_string(arg)
       Chronic.parse(arg).tap do |t|
         raise ArgumentError, "invalid format: #{arg.inspect}" if t.nil?
       end
@@ -31,7 +42,7 @@ Clamp do
 
   else
 
-    def parse_timestamp(arg)
+    def parse_time_string(arg)
       Time.parse(arg)
     end
 
