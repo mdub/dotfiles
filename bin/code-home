@@ -98,7 +98,7 @@ Clamp do
 
   def logical_place_for(origin_url)
     case origin_url
-    when %r{^git@([^/]+):(.+).git$}
+    when %r{^(?:[\w-]+)@([^/]+):(.+).git$}
       File.join(code_home, $1, $2)
     when %r{^[a-z]+://(?:[^/]+@)?([^/]+)/(.+?)(?:\.git)?$}
       File.join(code_home, $1, $2)
