@@ -23,6 +23,7 @@ cask "finicky"
 cask "font-anonymous-pro"
 cask "font-hack"
 cask "font-source-code-pro"
+cask "gfxcardstatus"
 cask "google-chrome" unless File.directory?("/Applications/Google Chrome.app")
 cask "istat-menus"
 cask "launchbar"
