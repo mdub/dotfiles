@@ -14,7 +14,7 @@ Clamp do
     case git_url 
     when %r{^https://([\w.]+)/(.*?)(.git)?$}
       [$1, $2]
-    when %r{^ssh://git@([\w.]+)/(.*?)(.git)?$}
+    when %r{^(?:ssh://)?git@([\w.]+)/(.*?)(.git)?$}
       [$1, $2]
     else
       signal_error "unrecognised Git URL"
@@ -60,6 +60,14 @@ Clamp do
       assert_git_web_url(
         git_url: "https://github.com/mdub/clamp.git", branch: "master",
         is: "https://github.com/mdub/clamp/tree/master/"
+      )
+      assert_git_web_url(
+        git_url: "ssh://git@git.sqcorp.co/cash/franklin.git", branch: "master",
+        is: "https://git.sqcorp.co/projects/cash/repos/franklin/browse/?at=refs/heads/master"
+      )
+      assert_git_web_url(
+        git_url: "git@git.sqcorp.co/cash/franklin.git", branch: "master",
+        is: "https://git.sqcorp.co/projects/cash/repos/franklin/browse/?at=refs/heads/master"
       )
     end
 
