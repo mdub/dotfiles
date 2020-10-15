@@ -29,23 +29,48 @@ Clamp do
     ENV.fetch("GIT_PREFIX") { `git rev-parse --show-prefix`.chomp }
   end
 
-  def git_web_url(git_url:, branch:, prefix: "")
+  def git_web_url(git_url, branch:, prefix: "")
     host, path = git_host_and_path(git_url)
     case host
     when "git.sqcorp.co"
-        project, repo = path.split("/",2)
-        "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
+      project, repo = path.split("/",2)
+      "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
     else
-        "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
+      "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
     end
   end
 
-  def execute
-    puts git_web_url(
-      git_url: git_url,
-      branch: git_branch,
-      prefix: git_prefix
-    )
+  self.default_subcommand = "show"
+
+  subcommand "show", "puts Web UI URL" do
+
+    def execute
+      puts git_web_url(
+        git_url,
+        branch: git_branch,
+        prefix: git_prefix
+      )
+    end
+
+  end
+
+  subcommand "selftest", "run self-tests" do
+
+    def execute
+      assert_git_web_url(
+        git_url: "https://github.com/mdub/clamp.git", branch: "master",
+        is: "https://github.com/mdub/clamp/tree/master/"
+      )
+    end
+
+    def assert_git_web_url(git_url:, is:, branch: "master")
+      expected = is
+      actual = git_web_url(git_url, branch: branch)
+      unless actual == expected
+        signal_error "expected: #{expected}\n        but got: #{actual}"
+      end
+    end
+
   end
 
 end
