@@ -1,26 +1,51 @@
 #! /usr/bin/env ruby
 
-git_url = `git config --get remote.origin.url`.chomp
-exit 1 unless $?.exitstatus.zero?
+require "clamp"
 
-branch = `git rev-parse --abbrev-ref HEAD`.chomp
-prefix = ENV.fetch("GIT_PREFIX") { `git rev-parse --show-prefix`.chomp }
+Clamp do
 
-case git_url 
-when %r{^https://([\w.]+)/(.*?)(.git)?$}
-    host = $1
-    path = $2
-when %r{^ssh://git@([\w.]+)/(.*?)(.git)?$}
-    host = $1
-    path = $2
-else
-    $stderr.puts "unrecognised git url"
-end
+  def git_url
+    `git config --get remote.origin.url`.chomp.tap do 
+      signal_error "cannot determine Git URL" unless $?.success?
+    end
+  end
 
-case host
-when "git.sqcorp.co"
-    project, repo = path.split("/",2)
-    puts "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
-else
-    puts "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
+  def git_host_and_path(git_url)
+    case git_url 
+    when %r{^https://([\w.]+)/(.*?)(.git)?$}
+      [$1, $2]
+    when %r{^ssh://git@([\w.]+)/(.*?)(.git)?$}
+      [$1, $2]
+    else
+      signal_error "unrecognised Git URL"
+    end
+  end
+
+  def git_branch
+    `git rev-parse --abbrev-ref HEAD`.chomp
+  end
+
+  def git_prefix
+    ENV.fetch("GIT_PREFIX") { `git rev-parse --show-prefix`.chomp }
+  end
+
+  def git_web_url(git_url:, branch:, prefix: "")
+    host, path = git_host_and_path(git_url)
+    case host
+    when "git.sqcorp.co"
+        project, repo = path.split("/",2)
+        "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
+    else
+        "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
+    end
+  end
+
+  def execute
+    puts git_web_url(
+      git_url: git_url,
+      branch: git_branch,
+      prefix: git_prefix
+    )
+  end
+
 end
