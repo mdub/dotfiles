@@ -13,6 +13,7 @@
 	lg = l --graph 
 	lga = l --graph --all
 	prb = pull --rebase
+	push-upstream = push -u origin HEAD
 	qpush = push --no-verify
 	qs = status -uno
 	rbi = rebase --interactive
