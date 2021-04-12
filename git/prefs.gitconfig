@@ -9,8 +9,8 @@
 	cleanup = !git branch --merged | grep -v '\\*\\|master\\|develop' | xargs -n 1 git branch -d
 	co = checkout
 	cu = cleanup
-	l = log --pretty='%C(bold blue)%h - %C(reset)%C(green)(%ar)%C(reset) - %s %C(dim)- %an%C(reset)%C(yellow)%d' 
-	lg = l --graph 
+	l = log --pretty='%C(bold blue)%h - %C(reset)%C(green)(%ar)%C(reset) - %s %C(dim)- %an%C(reset)%C(yellow)%d'
+	lg = l --graph
 	lga = l --graph --all
 	prb = pull --rebase
 	push-upstream = push -u origin HEAD
@@ -29,3 +29,6 @@
 
 [log]
 	date = iso-local
+
+[init]
+	defaultBranch = main
