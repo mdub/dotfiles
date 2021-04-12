@@ -39,6 +39,10 @@ function fish_prompt
     end
   end
 
+  if test -n "$SQM_ENV"
+    echo -n " [$SQM_ENV/$SQM_REGION]"
+  end
+
   echo ""
   if test $last_command_status -eq 0
     echo -n $success_color
