@@ -5,8 +5,9 @@
 [alias]
 	amend = commit --amend --no-edit
 	b = branch
+	back = !git checkout `git branch --format '%(refname:short)' | grep 'master\\|main'`
 	ci = commit
-	cleanup = !git branch --merged | grep -v '\\*\\|master\\|develop' | xargs -n 1 git branch -d
+	cleanup = !git branch --merged | grep -v '\\*\\|master\\|main' | xargs -n 1 git branch -d
 	co = checkout
 	cu = cleanup
 	l = log --pretty='%C(bold blue)%h - %C(reset)%C(green)(%ar)%C(reset) - %s %C(dim)- %an%C(reset)%C(yellow)%d'
