@@ -8,7 +8,9 @@ Clamp do
 
   option %w(-U --utc --gmt), :flag, "convert to UTC"
 
-  option %w(-L --local), :flag, "convert to local time" 
+  option %w(-L --local), :flag, "convert to local time"
+
+  option %w(-f --format), "FORMAT", "output format", default: "iso8601"
 
   parameter "[TIME]", "date/time string" do |arg|
     parse_time(arg)
@@ -16,7 +18,7 @@ Clamp do
 
   def execute
     ts = time || Time.now
-    puts convert(ts).iso8601
+    puts format_time(convert(ts))
   end
 
   private
@@ -52,6 +54,24 @@ Clamp do
     return ts.utc if utc?
     return ts.localtime if local?
     ts
+  end
+
+  def format_time_as_s(ts)
+    ts.to_i
+  end
+
+  def format_time_as_ms(ts)
+    (ts.to_f * 1000).to_i
+  end
+
+  def format_time(ts)
+    if ts.respond_to?(format)
+      return ts.public_send(format)
+    end
+    if respond_to?("format_time_as_#{format}", true)
+      return send("format_time_as_#{format}", ts)
+    end
+    signal_usage_error "unrecognised format: #{format}"
   end
 
 end
