@@ -23,15 +23,20 @@ function fish_prompt
   set -l success_color    (set_color cyan)
   set -l error_color      (set_color red --bold)
   set -l directory_color  (set_color $fish_color_quote 2> /dev/null; or set_color brown)
+  set -l env_color        (set_color 00afff)
   set -l repository_color (set_color $fish_color_cwd 2> /dev/null; or set_color green)
 
   echo ""
 
   echo -n -s $directory_color $cwd $normal_color
 
-  if git_is_repo
-    echo -n -s " on " $repository_color (git_branch_name) $normal_color " "
+  if test -n "$HERMIT_ENV"
+    echo -n $env_color 🐚 (basename "$HERMIT_ENV")
+  end
 
+  if git_is_repo
+    echo -n -s $normal_color " on " $repository_color (git_branch_name)
+    echo -n -s $normal_color " "
     if git_is_touched
       echo -n -s $dirty
     else
@@ -40,7 +45,7 @@ function fish_prompt
   end
 
   if test -n "$SQM_ENV"
-    echo -n " [$SQM_ENV/$SQM_REGION]"
+    echo -n $normal_color "[$SQM_ENV/$SQM_REGION]"
   end
 
   echo ""
