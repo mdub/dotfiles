@@ -1,3 +1,3 @@
 function fuh
-  fish -C 'bax "source ./bin/activate-hermit"'
+  fish -C 'replay "source ./bin/activate-hermit"'
 end
