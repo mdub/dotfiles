@@ -34,15 +34,7 @@ function fish_prompt
     echo -n $env_color 🐚 (basename "$HERMIT_ENV")
   end
 
-  if git_is_repo
-    echo -n -s $normal_color " on " $repository_color (git_branch_name)
-    echo -n -s $normal_color " "
-    if git_is_touched
-      echo -n -s $dirty
-    else
-      echo -n -s (git_ahead $ahead $behind $diverged $none)
-    end
-  end
+  fish_git_prompt
 
   if test -n "$SQM_ENV"
     echo -n $normal_color "[$SQM_ENV/$SQM_REGION]"

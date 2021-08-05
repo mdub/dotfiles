@@ -1,8 +1,11 @@
 #! /usr/bin/env fish
 
 # Install fisher
-type -q fisher; or curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
-source ~/.config/fish/functions/fisher.fish
+type -q fisher; or curl -sL https://git.io/fisher | source
 
-# Add my stuff
-fisher add ~/.dotfiles/fish/fish-mdub
+fisher install jorgebucaran/fisher
+fisher install danhper/fish-ssh-agent
+fisher install fishpkg/fish-git-util
+fisher install jorgebucaran/replay.fish
+fisher install oh-my-fish/plugin-aws
+fisher install ~/.dotfiles/fish/fish-mdub
