@@ -10,3 +10,5 @@ alias gs="GIT_PAGER= g status"
 alias gp="g pull"
 alias gpr="g pull --rebase"
 alias gri="g rebase -i origin/master"
+
+set -x GH_PAGER less
