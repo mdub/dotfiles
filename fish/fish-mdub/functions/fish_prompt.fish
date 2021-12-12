@@ -24,7 +24,6 @@ function fish_prompt
   set -l error_color      (set_color red --bold)
   set -l directory_color  (set_color $fish_color_quote 2> /dev/null; or set_color brown)
   set -l env_color        (set_color 00afff)
-  set -l repository_color (set_color $fish_color_cwd 2> /dev/null; or set_color green)
 
   echo ""
 
