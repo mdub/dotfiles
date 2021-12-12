@@ -10,6 +10,7 @@
 	cleanup = !git branch --merged | grep -v '\\*\\|master\\|main' | xargs -n 1 git branch -d
 	co = checkout
 	cu = cleanup
+	fpush = push --force-with-lease
 	l = log --pretty='%C(bold blue)%h - %C(reset)%C(green)(%ar)%C(reset) - %s %C(dim)- %an%C(reset)%C(yellow)%d'
 	lg = l --graph
 	lga = l --graph --all
