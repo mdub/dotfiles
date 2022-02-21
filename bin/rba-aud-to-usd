@@ -1,0 +1,38 @@
+#! /usr/bin/env ruby
+
+require 'clamp'
+require 'csv'
+require 'http'
+require 'pry'
+
+RATE_HISTORY_CSV_URL = "https://www.rba.gov.au/statistics/tables/csv/f11.1-data.csv"
+
+Clamp do
+
+  parameter "[DATE]", "target date", &Date.method(:parse)
+
+  def execute
+    csv = HTTP.get(RATE_HISTORY_CSV_URL).to_s.sub(%r{^.*\n}, '')
+    data = CSV.parse(csv, headers: true)
+    row = if date
+      target_date_string = date.strftime("%d-%b-%Y")
+      data.find { |row| row["Title"] == target_date_string }
+    else
+      last_item(data)
+    end
+    if row.nil?
+      signal_error "no matching row found"
+    end
+    puts row["A$1=USD"]
+  end
+
+  def last_item(items)
+    last_item = nil
+    items.each do |item|
+      last_item = item
+    end
+    last_item
+  end
+
+end
+
