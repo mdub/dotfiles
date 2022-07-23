@@ -82,8 +82,8 @@ cask "monodraw"
 cask "notion"
 cask "obs"
 cask "rq"
-cask "slack"
-cask "tuple"
+cask "slack" unless File.directory?("/Applications/Slack.app")
+cask "tuple" unless File.directory?("/Applications/Tuple.app")
 cask "visual-studio-code"
 cask "vlc"
 cask "workflowy"
