@@ -1,0 +1,30 @@
+#! /usr/bin/env ruby
+
+require "clamp"
+require "uri"
+
+Clamp do
+
+  self.description = "Join Zoom meeting in browser"
+
+  parameter "MEETING", "meeting ID"
+  parameter "[PASSWORD]", "meeting password"
+
+  def execute
+    open_in_browser(
+      "https://zoom.us/wc/join/#{meeting}",
+      pwd: password
+    )
+  end
+
+  private
+
+  def open_in_browser(url, parameters = {})
+    parameters = parameters.reject { |k,v| v.nil? }
+    unless parameters.empty?
+      url += "?" + URI.encode_www_form(parameters)
+    end
+    system("open", url)
+  end
+
+end
