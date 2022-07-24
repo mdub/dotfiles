@@ -2,10 +2,9 @@
 
 set -e
 
-git config --global core.excludesfile ~/.gitignore
-git config --global include.path ~/.dotfiles/git/.gitconfig
+git config --global --get-all include.path | grep '~/.dotfiles/git/prefs.gitconfig' > /dev/null || \
+git config --global --add include.path '~/.dotfiles/git/prefs.gitconfig'
 
+git config --global core.excludesfile '~/.gitignore'
 touch ~/.gitignore
 sort -u ~/.gitignore $(dirname $0)/.gitignore > /tmp/$$.gitignore && mv /tmp/$$.gitignore ~/.gitignore
-
-
