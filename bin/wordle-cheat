@@ -1,0 +1,34 @@
+#! /usr/bin/env ruby
+
+require "clamp"
+
+Clamp do
+
+  parameter "PATTERN", "word pattern" do |arg|
+    Regexp.new("^#{arg}$")
+  end
+
+  parameter "[INCLUDED]", "other included letters", default: ""
+
+  parameter "[EXCLUDED]", "excluded letters", default: ""
+
+  def execute
+    File.new("/usr/share/dict/words").each_line do |line|
+      puts line if matches?(line)
+    end
+  end
+
+  private 
+
+  def matches?(word)
+    return false unless word.match(pattern)
+    included.each_char do |c|
+      return false unless word.include?(c)
+    end
+    excluded.each_char do |c|
+      return false if word.include?(c)
+    end
+    true
+  end
+
+end
