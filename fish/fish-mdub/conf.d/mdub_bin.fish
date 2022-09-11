@@ -1,1 +1,1 @@
-set -gx PATH ~/.dotfiles/bin $PATH
+fish_add_path ~/.dotfiles/bin
