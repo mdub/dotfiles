@@ -1,1 +1,1 @@
-fish_add_path ~/.dotfiles/bin
+fish_add_path --path -g ~/.dotfiles/bin
