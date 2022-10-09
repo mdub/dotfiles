@@ -1,27 +1,64 @@
 #! /usr/bin/env ruby
 
 require 'clamp'
+require 'json'
+require 'keychain'
+require 'rest-client'
 require 'time'
+
 
 Clamp do
 
-  parameter "SYMBOL", "ticker symbol"
-  parameter "START_DATE", "starting date", &Date.method(:parse)
-  parameter "[END_DATE]", "ending date", &Date.method(:parse)
+  parameter "SYMBOL", "ticker symbol", &:upcase
+  parameter "[DATE]", "market date" do |arg|
+    Date.parse(arg).strftime("%Y-%m-%d")
+  end
 
   def execute
-    url = "https://query1.finance.yahoo.com/v7/finance/download/#{symbol}?period1=#{ts_of(start_date)}&period2=#{ts_of(end_date)}&interval=1d"
-    exec("curl", "-s", url)
+    if date
+      puts dated_price  
+    else
+      puts last_price
+    end
   end
 
   private
 
-  def default_end_date
-    start_date + 1
+  def polygon_api_key
+    Keychain.internet_passwords.where(server: "polygon.io").first.password
   end
 
-  def ts_of(date)
-    Time.utc(date.year, date.month, date.day).to_i
+  def dated_price
+    response = JSON.parse(
+      RestClient.get(
+        "https://api.polygon.io/v1/open-close/#{symbol}/#{date}", 
+        accept: :json,
+        params: {
+          adjusted: true,
+          apiKey: polygon_api_key
+        }
+      )
+    )
+    response["close"]
+  rescue RestClient::RequestFailed => e
+    signal_error e.message
+  end
+
+  def last_price
+    response = JSON.parse(
+      RestClient.get(
+        "https://api.polygon.io/v2/aggs/ticker/#{symbol}/prev", 
+        accept: :json,
+        params: {
+          adjusted: true,
+          apiKey: polygon_api_key
+        }
+      )
+    )
+    if response["resultsCount"] == 0
+      signal_error "no results found for #{symbol}"
+    end
+    response["results"].first["c"]
   end
 
 end
