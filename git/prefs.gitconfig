@@ -14,6 +14,7 @@
 	l = log --pretty='%C(bold blue)%h - %C(reset)%C(green)(%ar)%C(reset) - %s %C(dim)- %an%C(reset)%C(yellow)%d'
 	lg = l --graph
 	lga = l --graph --all
+	please = push --force-with-lease
 	prb = pull --rebase
 	push-upstream = push -u origin HEAD
 	qpush = push --no-verify
