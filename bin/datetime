@@ -6,11 +6,18 @@ require 'time'
 
 Clamp do
 
+  FORMATS = %w(iso8601 rfc822 httpdate s ms)
+
   option %w(-U --utc --gmt), :flag, "convert to UTC"
 
   option %w(-L --local), :flag, "convert to local time"
 
-  option %w(-f --format), "FORMAT", "output format", default: "iso8601"
+  option %w(-f --format), "FORMAT", "output format\n  (#{FORMATS.inspect})", default: "iso8601" do |arg|
+    unless FORMATS.include?(arg)
+      signal_usage_error "unknown format #{arg.inspect}"
+    end
+    arg
+  end
 
   option %w(-d --fractional-second-digits), "N", "number of digits for fractional seconds", default: 3, &method(:Integer)
 
@@ -68,7 +75,10 @@ Clamp do
 
   def format_time(ts)
     if ts.respond_to?(format)
-      return ts.public_send(format, fractional_second_digits)
+      if ts.method(format).arity > 0
+        return ts.public_send(format, fractional_second_digits)
+      end
+      return ts.public_send(format)
     end
     if respond_to?("format_time_as_#{format}", true)
       return send("format_time_as_#{format}", ts)
