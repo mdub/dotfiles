@@ -27,7 +27,7 @@ function fish_prompt
 
   echo ""
 
-  echo -n -s $directory_color $cwd $normal_color
+  echo -n -s (date +%H:%M) " " $directory_color $cwd $normal_color
 
   if test -n "$HERMIT_ENV"
     echo -n $env_color 🐚 (basename "$HERMIT_ENV")
@@ -40,6 +40,7 @@ function fish_prompt
   end
 
   echo ""
+
   if test $last_command_status -eq 0
     echo -n $success_color
   else
