@@ -7,7 +7,6 @@
 	b = branch
 	back = !git checkout `git branch --format '%(refname:short)' | grep 'master\\|main'`
 	ci = commit
-	cleanup = !git branch --merged | grep -v '\\*\\|master\\|main' | xargs -n 1 git branch -d
 	co = checkout
 	cu = cleanup
 	fpush = push --force-with-lease
