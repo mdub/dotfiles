@@ -1,5 +1,8 @@
 #! /bin/sh
 
+# Fetch the latest
+git fetch --prune --all
+
 # Delete branches that have been merged to main
 for branch in $(git branch --merged | grep -v '\*\|master\|main'); do 
   git branch -d "$branch"
