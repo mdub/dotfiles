@@ -35,7 +35,7 @@ function fish_prompt
 
   if test -n "$HERMIT_ENV"
     set -l hermit_env (basename "$HERMIT_ENV") 
-    echo -n " Hermit=$hermit_env"
+    echo -n " 🐚=$hermit_env"
   end
 
   if test -n "$SQM_ENV"
