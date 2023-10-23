@@ -29,17 +29,27 @@ function fish_prompt
 
   echo -n -s (date +%H:%M) " " $directory_color $cwd $normal_color
 
-  if test -n "$HERMIT_ENV"
-    echo -n $env_color 🐚 (basename "$HERMIT_ENV")
-  end
+  echo -n $env_color
 
   fish_git_prompt
 
+  if test -n "$HERMIT_ENV"
+    set -l hermit_env (basename "$HERMIT_ENV") 
+    echo -n " Hermit=$hermit_env"
+  end
+
   if test -n "$SQM_ENV"
-    echo -n $normal_color "[$SQM_ENV/$SQM_REGION]"
+    echo -n " SQM=$SQM_ENV/$SQM_REGION"
+  end
+
+  set -l aws_color (set_color red)
+  if test -n "$AWS_PROFILE"
+    echo -n $aws_color 
+    echo -n " AWS=$AWS_PROFILE"
   end
 
   echo ""
+
 
   if test $last_command_status -eq 0
     echo -n $success_color
