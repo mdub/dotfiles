@@ -10,6 +10,8 @@ Clamp do
   parameter "MEETING", "meeting ID"
   parameter "[PASSWORD]", "meeting password"
 
+  option %w(-U --show-url), :flag, "print URLs, rather than opening them"
+
   def execute
     open_in_browser(
       "https://zoom.us/wc/join/#{meeting}",
@@ -24,7 +26,11 @@ Clamp do
     unless parameters.empty?
       url += "?" + URI.encode_www_form(parameters)
     end
-    system("open", url)
+    if show_url?
+      puts url
+    else
+      system("open", url)
+    end
   end
 
 end
