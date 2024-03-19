@@ -2,16 +2,17 @@
 
 ## Checklist
 
+- Homebrew
+  - install it
+  - run `homebrew/setup`
+- 1Password
+  - `brew install 1password`
+  - login
 - SSH
   - generate a key
   - register with GitHub
 - clone this repo!
-- Homebrew
-  - install it
-  - run `homebrew/setup`
 - LaunchBar
-- 1Password
-  - login
 - Terminal
   - add "DogBiscuit" profile
 - workflowy
@@ -19,7 +20,7 @@
 - Moom
   - `defaults import com.manytricks.Moom misc/Moom.plist`
 - Mail
-  - FailMail profile
+  - FastMail profile
 - fishshell
   - fish/setup
 - asdf
