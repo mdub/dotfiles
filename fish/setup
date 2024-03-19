@@ -1,5 +1,10 @@
 #! /usr/bin/env fish
 
+mkdir -p ~/.config/fish/conf.d
+
+# Homebrew
+test -f ~/.config/fish/conf.d/00-homebrew.fish; or cp (path dirname $0)/00-homebrew.fish ~/.config/fish/conf.d/
+
 # Install fisher
 type -q fisher; or curl -sL https://git.io/fisher | source
 
