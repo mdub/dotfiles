@@ -18,6 +18,7 @@
 - workflowy
   - login
 - Moom
+  - download from OS X App Store to get licensed version
   - `defaults import com.manytricks.Moom misc/Moom.plist`
 - Mail
   - FastMail profile
