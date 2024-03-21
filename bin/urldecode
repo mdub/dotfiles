@@ -1,0 +1,5 @@
+#! /usr/bin/env ruby
+
+require 'uri'
+
+puts URI.decode_uri_component(STDIN.read)
