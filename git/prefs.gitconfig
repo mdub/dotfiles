@@ -5,7 +5,7 @@
 [alias]
 	amend = commit --amend --no-edit
 	b = branch
-	back = !git checkout `git branch --format '%(refname:short)' | grep 'master\\|main'`
+	back = !git checkout `git branch --format '%(refname:short)' | grep '^master\\|^main'`
 	ci = commit
 	co = checkout
 	cu = cleanup
