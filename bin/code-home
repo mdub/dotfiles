@@ -1,6 +1,12 @@
 #! /usr/bin/env ruby
 
-require 'clamp'
+require 'bundler/inline'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'clamp'
+end
+
 require 'fileutils'
 require 'find'
 

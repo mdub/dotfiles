@@ -1,11 +1,15 @@
 #! /usr/bin/env ruby
 
-require 'clamp'
-require 'json'
-require 'keychain'
-require 'rest-client'
-require 'time'
+require 'bundler/inline'
 
+gemfile do
+  source 'https://rubygems.org'
+  gem 'clamp'
+  gem 'json'
+  gem 'ruby-keychain', require: 'keychain'
+  gem 'rest-client'
+  gem 'time'
+end
 
 Clamp do
 
