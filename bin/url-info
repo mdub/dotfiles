@@ -1,0 +1,32 @@
+#! /usr/bin/env ruby
+
+require 'bundler/inline'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'clamp'
+  gem 'rack'
+  gem 'uri'
+  gem 'json'
+end
+
+Clamp do
+
+  parameter "url", "URL to be parsed"
+
+  def execute
+    u = URI.parse(url)
+    query_params = u.query ? Rack::Utils.parse_nested_query(u.query) : {}
+    info = {
+      "scheme" => u.scheme,
+      "userinfo" => u.userinfo,
+      "host" => u.host,
+      "port" => u.port,
+      "path" => u.path,
+      "query" => query_params,
+      "fragment" => u.fragment
+    }
+    puts JSON.pretty_generate(info)
+  end
+
+end
