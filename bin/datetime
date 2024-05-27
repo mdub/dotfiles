@@ -11,7 +11,7 @@ end
 
 Clamp do
 
-  FORMATS = %w(iso8601 rfc822 httpdate s ms)
+  FORMATS = %w(iso8601 rfc822 httpdate s ms epoch_day)
 
   option %w(-U --utc --gmt), :flag, "convert to UTC"
 
@@ -76,6 +76,10 @@ Clamp do
 
   def format_time_as_ms(ts)
     (ts.to_f * 1000).to_i
+  end
+
+  def format_time_as_epoch_day(ts)
+    (ts.to_date - Date.new(1970, 1, 1)).to_i
   end
 
   def format_time(ts)
