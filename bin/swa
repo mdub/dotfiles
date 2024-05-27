@@ -1,0 +1,3 @@
+#! /bin/sh
+
+BUNDLE_GEMFILE="$HOME/Code/github.com/mdub/swa/Gemfile" bundle exec swa "$@"
