@@ -1,0 +1,21 @@
+#! /usr/bin/env ruby
+
+require 'bundler/inline'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'bytesize'
+  gem 'clamp'
+end
+
+Clamp do
+
+  parameter "BYTES", "number of bytes" do |arg|
+    Integer(arg)
+  end
+
+  def execute
+    puts ByteSize.bytes(bytes)
+  end
+
+end
