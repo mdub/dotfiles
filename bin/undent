@@ -1,0 +1,9 @@
+#! /usr/bin/env ruby
+
+lines = ARGF.each.to_a
+
+min_indent = lines.map { |line| line.index(/[^\s]/) || 0 }.min
+
+lines.each do |line|
+  print line[min_indent..-1]
+end
