@@ -1,5 +1,7 @@
 #! /usr/bin/env ruby
 
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
 require 'bundler/inline'
 
 gemfile do
@@ -20,7 +22,7 @@ Clamp do
 
   def execute
     if date
-      puts dated_price  
+      puts dated_price
     else
       puts last_price
     end
@@ -35,7 +37,7 @@ Clamp do
   def dated_price
     response = JSON.parse(
       RestClient.get(
-        "https://api.polygon.io/v1/open-close/#{symbol}/#{date}", 
+        "https://api.polygon.io/v1/open-close/#{symbol}/#{date}",
         accept: :json,
         params: {
           adjusted: true,
@@ -51,7 +53,7 @@ Clamp do
   def last_price
     response = JSON.parse(
       RestClient.get(
-        "https://api.polygon.io/v2/aggs/ticker/#{symbol}/prev", 
+        "https://api.polygon.io/v2/aggs/ticker/#{symbol}/prev",
         accept: :json,
         params: {
           adjusted: true,

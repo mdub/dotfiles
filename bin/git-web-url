@@ -1,5 +1,7 @@
 #! /usr/bin/env ruby
 
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
 require 'bundler/inline'
 
 gemfile do
@@ -10,13 +12,13 @@ end
 Clamp do
 
   def git_url
-    `git config --get remote.origin.url`.chomp.tap do 
+    `git config --get remote.origin.url`.chomp.tap do
       signal_error "cannot determine Git URL" unless $?.success?
     end
   end
 
   def git_host_and_path(git_url)
-    case git_url 
+    case git_url
     when %r{^https://([\w.]+)/(.*?)(.git)?$}
       [$1, $2]
     when %r{^(?:ssh://)?[\w-]+@([\w.]+)[/:](.*?)(.git)?$}
