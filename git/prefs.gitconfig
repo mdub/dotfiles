@@ -5,7 +5,7 @@
 [alias]
 	amend = commit --amend --no-edit
 	b = branch
-	back = !git checkout `git branch --format '%(refname:short)' | grep '^master\\|^main'`
+	back = ! git checkout `git trunk`
 	ci = commit
 	co = checkout
 	cu = cleanup
@@ -21,6 +21,7 @@
 	rbi = rebase --interactive
 	reset-to-upstream = reset --hard @{u}
 	s = status
+	trunk = ! git branch --format '%(refname:short)' | grep '^master\\|^main'
 	www = ! open "`git-web-url`"
 
 [url "https://github.com/"]
