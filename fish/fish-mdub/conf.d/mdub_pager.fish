@@ -1,3 +1,3 @@
-alias v=most
+alias v=bat
 
 set -x PAGER most
