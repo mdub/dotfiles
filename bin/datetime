@@ -26,7 +26,7 @@ Clamp do
     arg
   end
 
-  option %w(-d --fractional-second-digits), "N", "number of digits for fractional seconds", default: 3, &method(:Integer)
+  option %w(-d --fractional-second-digits), "N", "number of digits for fractional seconds", default: 6, &method(:Integer)
 
   parameter "[TIME]", "date/time string" do |arg|
     parse_time(arg)
@@ -86,7 +86,7 @@ Clamp do
 
   def format_time(ts)
     if ts.respond_to?(format)
-      if ts.method(format).arity > 0
+      if ts.method(format).arity != 0
         return ts.public_send(format, fractional_second_digits)
       end
       return ts.public_send(format)
