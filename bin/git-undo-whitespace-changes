@@ -1,0 +1,9 @@
+#! /usr/bin/env bash
+
+for file in "$@"; do
+  if git diff --ignore-all-space -- "$file" | grep . >/dev/null; then
+    continue
+  else
+    git checkout -- "$file"
+  fi
+done
