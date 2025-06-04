@@ -43,9 +43,10 @@
 	# syntax-theme = "Visual Studio Dark+"
 	#--- theme (based on "corvus" theme) ---
     commit-style = "#949494"
-    # file-style = omit
-    # syntax-theme = none
-    hunk-header-decoration-style = "#949494" ul
+    file-style = white bold
+	file-decoration-style = white ul ol
+	# syntax-theme = none
+    hunk-header-decoration-style = "#949494" box
     hunk-header-file-style = "#949494"
     hunk-header-style = "#949494"
     # line-numbers = true
