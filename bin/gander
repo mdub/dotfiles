@@ -10,6 +10,7 @@ gemfile do
   gem 'clamp'
   gem 'dry-struct'
   gem 'json'
+  gem 'rouge'
   gem 'yaml'
 end
 
@@ -41,6 +42,8 @@ Clamp do
 
   subcommand "watch", "Watch a session" do
 
+    option %w(-C --[no-]colorize), :flag, "Colorize output"
+
     parameter "[SESSION_ID]", "ID of the session to watch", default: "latest"
 
     def execute
@@ -53,7 +56,9 @@ Clamp do
     end
 
     def print_session_entry(data)
-      puts YAML.dump(data)
+      yaml = YAML.dump(data)
+      yaml = colorize_yaml(yaml) if colorize?
+      puts yaml
     end
 
     def session_path
@@ -62,6 +67,16 @@ Clamp do
         return session.path if session.id == session_id
       end
       signal_error "Session with ID '#{session_id}' not found."
+    end
+
+    def colorize_yaml(yaml)
+      @formatter ||= Rouge::Formatters::Terminal256.new
+      @lexer ||= Rouge::Lexers::YAML.new
+      return @formatter.format(@lexer.lex(yaml))
+    end
+
+    def default_colorize?
+      $stdout.tty?
     end
 
   end
