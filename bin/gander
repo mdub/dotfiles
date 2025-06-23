@@ -1,0 +1,76 @@
+#! /usr/bin/env ruby
+
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
+require 'bundler/inline'
+
+gemfile do
+  source 'https://rubygems.org'
+  gem 'actionview', require: 'action_view'
+  gem 'clamp'
+  gem 'dry-struct'
+  gem 'json'
+  gem 'yaml'
+end
+
+# require 'action_view/helpers/date_helper'
+
+module Types
+  include Dry.Types()
+end
+
+class SessionEntry < Dry::Struct
+  attribute :id, Types::String
+  attribute :path, Types::String
+  attribute :modified, Types::JSON::DateTime
+end
+
+Clamp do
+
+  self.description = "Watch Goose sessions"
+
+  include ActionView::Helpers::DateHelper
+
+  subcommand "list", "List Goose sessions" do
+    def execute
+      goose_sessions.each do |session|
+        puts "#{session.id} (modified #{time_ago_in_words(session.modified)} ago)"
+      end
+    end
+  end
+
+  subcommand "watch", "Watch a session" do
+
+    parameter "[SESSION_ID]", "ID of the session to watch", default: "latest"
+
+    def execute
+      puts session_path
+      IO.popen(["tail", "-n", "+1", "-f", session_path]) do |io|
+        io.each_line do |line|
+          print_session_entry(JSON.parse(line))
+        end
+      end
+    end
+
+    def print_session_entry(data)
+      puts YAML.dump(data)
+    end
+
+    def session_path
+      return goose_sessions.first.path if session_id == "latest"
+      goose_sessions.each do |session|
+        return session.path if session.id == session_id
+      end
+      signal_error "Session with ID '#{session_id}' not found."
+    end
+
+  end
+
+  def goose_sessions
+    @goose_sessions ||= begin
+      json = %x(goose session list --format json)
+      JSON.parse(json, symbolize_names: true).map { |data| SessionEntry.new(data) }
+    end
+  end
+
+end
