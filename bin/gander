@@ -9,6 +9,7 @@ gemfile do
   gem 'actionview', require: 'action_view'
   gem 'clamp'
   gem 'dry-struct'
+  gem 'file-tail'
   gem 'json'
   gem 'rouge'
   gem 'yaml'
@@ -30,6 +31,8 @@ Clamp do
 
   self.description = "Watch Goose sessions"
 
+  option "--debug", :flag, "Enable debug output"
+
   include ActionView::Helpers::DateHelper
 
   subcommand "list", "List Goose sessions" do
@@ -47,10 +50,18 @@ Clamp do
     parameter "[SESSION_ID]", "ID of the session to watch", default: "latest"
 
     def execute
-      puts session_path
-      IO.popen(["tail", "-n", "+1", "-f", session_path]) do |io|
-        io.each_line do |line|
-          print_session_entry(JSON.parse(line))
+      File::Tail::Logfile.open(session_path) do |io|
+        line_number = 0
+        io.forward.tail do |line|
+          line_number += 1
+          if debug?
+            puts "DEBUG: INPUT[#{line_number}] = #{line.inspect}"
+          end
+          begin
+            print_session_entry(JSON.parse(line))
+          rescue JSON::ParserError => e
+            warn "WARN: Failed to parse JSON: #{e.message}"
+          end
         end
       end
     end
