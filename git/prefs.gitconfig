@@ -63,7 +63,8 @@
 	minus-style = "#882211" normal
 	minus-emph-style = bold "#882211"
 	minus-non-emph-style = "#552211"
-	# blame-code-style = omit
-	blame-format = "{author:<18} {commit:<6} {timestamp:<15}"
-	blame-palette = "#000000" "#343434"
+	blame-code-style = syntax
+	blame-format = "{author:<16} {commit:<6} {timestamp:<15}"
+	blame-line-number-style = "bold"
+	blame-palette = red blue green magenta cyan yellow
 	zero-style = dim
