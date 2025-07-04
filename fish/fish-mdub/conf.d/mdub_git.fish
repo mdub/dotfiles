@@ -1,4 +1,5 @@
 alias g=hub
+alias lg=lazygit
 
 alias ga='g add'
 alias gb="g branch"
