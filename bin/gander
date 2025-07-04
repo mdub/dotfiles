@@ -15,8 +15,6 @@ gemfile do
   gem 'yaml'
 end
 
-# require 'action_view/helpers/date_helper'
-
 module Types
   include Dry.Types()
 end
@@ -43,7 +41,7 @@ Clamp do
     end
   end
 
-  subcommand "watch", "Watch a session" do
+  subcommand %w[watch tail], "Watch a session" do
 
     option %w(-C --[no-]colorize), :flag, "Colorize output"
 
@@ -51,6 +49,7 @@ Clamp do
 
     def execute
       File::Tail::Logfile.open(session_path) do |io|
+        io.reopen_suspicious = false
         line_number = 0
         io.forward.tail do |line|
           line_number += 1
