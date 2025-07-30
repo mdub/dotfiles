@@ -59,10 +59,10 @@
 	line-numbers-minus-style = bold "#591102"
 	plus-style = "#54c047" normal
 	plus-emph-style = bold "#54c047"
-	plus-non-emph-style = "#25551F"
+	plus-non-emph-style = "#45943cff"
 	minus-style = "#882211" normal
-	minus-emph-style = bold "#882211"
-	minus-non-emph-style = "#552211"
+	minus-emph-style = bold "#9a2612ff"
+	minus-non-emph-style = "#882211"
 	blame-code-style = syntax
 	blame-format = "{author:<16} {commit:<6} {timestamp:<15}"
 	blame-line-number-style = "bold"
