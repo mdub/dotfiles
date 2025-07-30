@@ -1,0 +1,3 @@
+#! /bin/bash
+
+exec mlr --ijson --ocsv cat "$@"
