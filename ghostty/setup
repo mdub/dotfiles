@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+TARGET="$HOME/.config/ghostty"
+SOURCE="$(cd "$(dirname "$0")" && pwd)"
+
+if [[ -d "$TARGET" && ! -L "$TARGET" ]]; then
+    echo "Error: $TARGET exists as directory" >&2
+    exit 1
+fi
+
+if [[ -L "$TARGET" && "$(readlink "$TARGET")" != "$SOURCE" ]]; then
+    echo "Error: $TARGET links elsewhere" >&2
+    exit 1
+fi
+
+mkdir -p ~/.config
+ln -sf "$SOURCE" "$TARGET"
