@@ -2,4 +2,9 @@
 
 set -e
 
-ls -lF $(which $1) | sed -n 's/^.*\/Cellar\/\([^\/]\{1,\}\)\/.*$/\1/ p'
+package=$(ls -lF $(which $1) | sed -n 's/^.*\/Cellar\/\([^\/]\{1,\}\)\/.*$/\1/ p')
+if [ -z "$package" ]; then
+    echo "ERROR: cannot find $1 in a brew package" >&2
+    exit 1
+fi
+echo "$package"
