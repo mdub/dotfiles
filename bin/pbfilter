@@ -1,0 +1,31 @@
+#! /usr/bin/env ruby
+# frozen_string_literal: true
+
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "clamp"
+end
+
+require "open3"
+
+Clamp do
+
+  parameter "COMMAND ...", "command to filter clipboard through", attribute_name: :filter_command
+
+  def execute
+    clipboard_content = `pbpaste`
+
+    filtered_content, status = Open3.capture2(*filter_command, stdin_data: clipboard_content)
+    exit status.exitstatus unless status.success?
+
+    # Copy filtered content back to clipboard
+    IO.popen("pbcopy", "w") { |io| io.write(filtered_content) }
+  rescue Errno::ENOENT => e
+    signal_error(e.message)
+  end
+
+end
