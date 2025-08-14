@@ -1,28 +1,30 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
+require "English"
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'clamp'
+  source "https://rubygems.org"
+  gem "clamp"
 end
 
 Clamp do
 
   def git_url
     `git config --get remote.origin.url`.chomp.tap do
-      signal_error "cannot determine Git URL" unless $?.success?
+      signal_error "cannot determine Git URL" unless $CHILD_STATUS.success?
     end
   end
 
   def git_host_and_path(git_url)
     case git_url
     when %r{^https://([\w.]+)/(.*?)(.git)?$}
-      [$1, $2]
+      [Regexp.last_match(1), Regexp.last_match(2)]
     when %r{^(?:ssh://)?[\w-]+@([\w.]+)[/:](.*?)(.git)?$}
-      [$1, $2]
+      [Regexp.last_match(1), Regexp.last_match(2)]
     else
       signal_error "unrecognised Git URL: #{git_url}"
     end
@@ -40,7 +42,7 @@ Clamp do
     host, path = git_host_and_path(git_url)
     case host
     when "git.sqcorp.co"
-      project, repo = path.split("/",2)
+      project, repo = path.split("/", 2)
       "https://#{host}/projects/#{project}/repos/#{repo}/browse/#{prefix}?at=refs/heads/#{branch}"
     else
       "https://#{host}/#{path}/tree/#{branch}/#{prefix}"
@@ -85,9 +87,9 @@ Clamp do
     def assert_git_web_url(git_url:, is:, branch: "master")
       expected = is
       actual = git_web_url(git_url, branch: branch)
-      unless actual == expected
-        signal_error "expected: #{expected}\n        but got: #{actual}"
-      end
+      return if actual == expected
+
+      signal_error "expected: #{expected}\n        but got: #{actual}"
     end
 
   end

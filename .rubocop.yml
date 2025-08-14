@@ -1,0 +1,7 @@
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+  EnforcedStyle: empty_lines
+Metrics/MethodLength:
+  Max: 16
+Style/StringLiterals:
+  EnforcedStyle: double_quotes

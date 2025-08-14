@@ -1,19 +1,20 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'clamp'
-  gem 'ulid'
-  gem 'time'
+  source "https://rubygems.org"
+  gem "clamp"
+  gem "ulid"
+  gem "time"
 end
 
 Clamp do
 
-  parameter "[TIME]", "time string", :default => "now", &Time.method(:parse)
+  parameter "[TIME]", "time string", default: "now", &Time.method(:parse)
 
   def execute
     puts ULID.generate(time)

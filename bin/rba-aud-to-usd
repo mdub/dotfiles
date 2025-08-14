@@ -1,12 +1,13 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'clamp'
-  gem 'csv'
-  gem 'http'
+  source "https://rubygems.org"
+  gem "clamp"
+  gem "csv"
+  gem "http"
 end
 
 RATE_HISTORY_CSV_URL = "https://www.rba.gov.au/statistics/tables/csv/f11.1-data.csv"
@@ -16,17 +17,15 @@ Clamp do
   parameter "[DATE]", "target date", &Date.method(:parse)
 
   def execute
-    csv = HTTP.get(RATE_HISTORY_CSV_URL).to_s.sub(%r{^.*\n}, '')
+    csv = HTTP.get(RATE_HISTORY_CSV_URL).to_s.sub(/^.*\n/, "")
     data = CSV.parse(csv, headers: true)
     row = if date
-      target_date_string = date.strftime("%d-%b-%Y")
-      data.find { |row| row["Title"] == target_date_string }
-    else
-      last_item(data)
-    end
-    if row.nil?
-      signal_error "no matching row found"
-    end
+            target_date_string = date.strftime("%d-%b-%Y")
+            data.find { |row| row["Title"] == target_date_string }
+          else
+            last_item(data)
+          end
+    signal_error "no matching row found" if row.nil?
     puts row["A$1=USD"]
   end
 
@@ -39,4 +38,3 @@ Clamp do
   end
 
 end
-

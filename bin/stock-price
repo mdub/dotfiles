@@ -1,16 +1,17 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'clamp'
-  gem 'json'
-  gem 'ruby-keychain', require: 'keychain'
-  gem 'rest-client'
-  gem 'time'
+  source "https://rubygems.org"
+  gem "clamp"
+  gem "json"
+  gem "ruby-keychain", require: "keychain"
+  gem "rest-client"
+  gem "time"
 end
 
 Clamp do
@@ -61,9 +62,7 @@ Clamp do
         }
       )
     )
-    if response["resultsCount"] == 0
-      signal_error "no results found for #{symbol}"
-    end
+    signal_error "no results found for #{symbol}" if response["resultsCount"].zero?
     response["results"].first["c"]
   end
 

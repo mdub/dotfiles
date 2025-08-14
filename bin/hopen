@@ -1,23 +1,27 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
+require "English"
 def normalise_url(url)
-  if url =~ %r{^(\w+://)?([0-9a-z\-]+(?:\.[0-9a-z\-]+)*)?(:\d+)?(/.*)?$}i
-    scheme, host, port, path = $~.captures
-    scheme ||= "http://"
-    host ||= "localhost"
-    path ||= "/"
-    [scheme, host, port, path].join
-  else
-    raise ArgumentError, "unrecognised URL"
-  end
+  raise ArgumentError, "unrecognised URL" unless url =~ %r{^(\w+://)?([0-9a-z-]+(?:\.[0-9a-z-]+)*)?(:\d+)?(/.*)?$}i
+
+  scheme, host, port, path = $LAST_MATCH_INFO.captures
+  scheme ||= "http://"
+  host ||= "localhost"
+  path ||= "/"
+  [scheme, host, port, path].join
 end
 
 def assert_normalise_url(input, expected)
-  actual = normalise_url(input) rescue $!
-  unless actual == expected
-    $stderr.puts %(normalise_url(#{input.inspect}) == #{actual.inspect} # expected #{expected.inspect})
-    exit 1
+  actual = begin
+    normalise_url(input)
+  rescue StandardError
+    $ERROR_INFO
   end
+  return if actual == expected
+
+  warn %(normalise_url(#{input.inspect}) == #{actual.inspect} # expected #{expected.inspect})
+  exit 1
 end
 
 assert_normalise_url "http://foo/bar", "http://foo/bar"

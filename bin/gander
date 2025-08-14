@@ -1,18 +1,19 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'actionview', require: 'action_view'
-  gem 'clamp'
-  gem 'dry-struct'
-  gem 'file-tail'
-  gem 'json'
-  gem 'rouge'
-  gem 'yaml'
+  source "https://rubygems.org"
+  gem "actionview", require: "action_view"
+  gem "clamp"
+  gem "dry-struct"
+  gem "file-tail"
+  gem "json"
+  gem "rouge"
+  gem "yaml"
 end
 
 module Types
@@ -53,9 +54,7 @@ Clamp do
         line_number = 0
         io.forward.tail do |line|
           line_number += 1
-          if debug?
-            puts "DEBUG: INPUT[#{line_number}] = #{line.inspect}"
-          end
+          puts "DEBUG: INPUT[#{line_number}] = #{line.inspect}" if debug?
           begin
             print_session_entry(JSON.parse(line))
           rescue JSON::ParserError => e
@@ -73,6 +72,7 @@ Clamp do
 
     def session_path
       return goose_sessions.first.path if session_id == "latest"
+
       goose_sessions.each do |session|
         return session.path if session.id == session_id
       end
@@ -82,7 +82,7 @@ Clamp do
     def colorize_yaml(yaml)
       @formatter ||= Rouge::Formatters::Terminal256.new
       @lexer ||= Rouge::Lexers::YAML.new
-      return @formatter.format(@lexer.lex(yaml))
+      @formatter.format(@lexer.lex(yaml))
     end
 
     def default_colorize?
@@ -93,7 +93,7 @@ Clamp do
 
   def goose_sessions
     @goose_sessions ||= begin
-      json = %x(goose session list --format json)
+      json = `goose session list --format json`
       JSON.parse(json, symbolize_names: true).map { |data| SessionEntry.new(data) }
     end
   end

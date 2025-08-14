@@ -1,22 +1,24 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
+require "English"
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-require 'bundler/inline'
+require "bundler/inline"
 
 gemfile do
-  source 'https://rubygems.org'
-  gem 'clamp'
+  source "https://rubygems.org"
+  gem "clamp"
 end
 
-require 'fileutils'
-require 'find'
+require "fileutils"
+require "find"
 
 Clamp do
 
   subcommand "for", "Print logical home for a code-base" do
 
-    parameter "URL", "Git origin URL", :attribute_name => :origin_url
+    parameter "URL", "Git origin URL", attribute_name: :origin_url
 
     def execute
       puts logical_place_for(origin_url)
@@ -26,14 +28,12 @@ Clamp do
 
   subcommand "get", "Checkout code in a logical place" do
 
-    parameter "URL", "Git origin URL", :attribute_name => :origin_url
+    parameter "URL", "Git origin URL", attribute_name: :origin_url
 
     def execute
       target = logical_place_for(origin_url)
       FileUtils.mkdir_p(File.dirname(target))
-      if File.exist?(target)
-        signal_error "Target already exists: #{target.inspect}"
-      end
+      signal_error "Target already exists: #{target.inspect}" if File.exist?(target)
       exec "git clone #{origin_url} #{target}"
     end
 
@@ -43,12 +43,11 @@ Clamp do
 
     def execute
       Find.find(code_home) do |path|
-        if FileTest.directory?(path) && File.basename(path) == ".git"
-          puts origin_url_of(File.dirname(path))
-          Find.prune
-        else
-          next
-        end
+        next unless FileTest.directory?(path) && File.basename(path) == ".git"
+
+        puts origin_url_of(File.dirname(path))
+        Find.prune
+
       end
     end
 
@@ -56,28 +55,24 @@ Clamp do
 
   subcommand "move", "Move directory to a logical place" do
 
-    option %w(-l --link), :flag, "replace existing directory with a symlink"
+    option %w[-l --link], :flag, "replace existing directory with a symlink"
 
     parameter "DIR", "project directory"
 
     def execute
       source = full_dir
-      unless File.directory?(source)
-        signal_error "#{source.inspect} is not a directory"
-      end
+      signal_error "#{source.inspect} is not a directory" unless File.directory?(source)
       target = logical_place_for(origin_url_of(dir))
       if source == target
         puts "No need to move #{source.inspect}"
         return
       end
-      if File.exist?(target)
-        signal_error "Target already exists: #{target.inspect}"
-      end
+      signal_error "Target already exists: #{target.inspect}" if File.exist?(target)
       FileUtils.mkdir_p(File.dirname(target))
       FileUtils.mv(source, target, verbose: true)
-      if link?
-        FileUtils.symlink(target, source, verbose: true)
-      end
+      return unless link?
+
+      FileUtils.symlink(target, source, verbose: true)
     end
 
     private
@@ -97,9 +92,7 @@ Clamp do
   def origin_url_of(dir)
     Dir.chdir(dir) do
       url = `git config remote.origin.url`
-      unless $?.success?
-        signal_error "no Git repository found in #{dir.inspect}"
-      end
+      signal_error "no Git repository found in #{dir.inspect}" unless $CHILD_STATUS.success?
       url
     end
   end
@@ -107,9 +100,9 @@ Clamp do
   def logical_place_for(origin_url)
     case origin_url
     when %r{^(?:[\w-]+)@([^/]+):(.+).git$}
-      File.join(code_home, $1, $2)
+      File.join(code_home, Regexp.last_match(1), Regexp.last_match(2))
     when %r{^[a-z]+://(?:[^/]+@)?([^/]+)/(.+?)(?:\.git)?$}
-      File.join(code_home, $1, $2)
+      File.join(code_home, Regexp.last_match(1), Regexp.last_match(2))
     else
       signal_error "cannot parse Git remote: #{origin_url.inspect}"
     end

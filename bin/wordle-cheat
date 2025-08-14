@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 require "clamp"
 
@@ -18,10 +19,11 @@ Clamp do
     end
   end
 
-  private 
+  private
 
   def matches?(word)
     return false unless word.match(pattern)
+
     included.each_char do |c|
       return false unless word.include?(c)
     end

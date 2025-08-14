@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
-file = ARGV.first || '.'
+file = ARGV.first || "."
 args = [file]
 args.unshift("-w") unless File.directory?(file)
 exec("code", *args)

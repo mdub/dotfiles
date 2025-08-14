@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
 require "clamp"
 require "uri"
@@ -10,7 +11,7 @@ Clamp do
   parameter "MEETING", "meeting ID"
   parameter "[PASSWORD]", "meeting password"
 
-  option %w(-U --show-url), :flag, "print URLs, rather than opening them"
+  option %w[-U --show-url], :flag, "print URLs, rather than opening them"
 
   def execute
     open_in_browser(
@@ -21,13 +22,12 @@ Clamp do
 
   protected
 
-  def parse_parameters
-  end
+  def parse_parameters; end
 
   def parse_parameters
     case remaining_arguments.first
     when %r{^https://[^/]+\.zoom\.us/j/(\w+)(?:\?pwd=(.+))?$}
-      remaining_arguments[0, 1] = [$1, $2].compact
+      remaining_arguments[0, 1] = [Regexp.last_match(1), Regexp.last_match(2)].compact
     end
     super
   end
@@ -35,10 +35,8 @@ Clamp do
   private
 
   def open_in_browser(url, parameters = {})
-    parameters = parameters.reject { |k,v| v.nil? }
-    unless parameters.empty?
-      url += "?" + URI.encode_www_form(parameters)
-    end
+    parameters = parameters.reject { |_k, v| v.nil? }
+    url += "?#{URI.encode_www_form(parameters)}" unless parameters.empty?
     if show_url?
       puts url
     else
