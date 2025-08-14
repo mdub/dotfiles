@@ -1,9 +1,30 @@
 #! /usr/bin/env ruby
+# frozen_string_literal: true
 
-lines = ARGF.each.to_a
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
 
-min_indent = lines.map { |line| line.index(/[^\s]/) || 0 }.min
+require "bundler/inline"
 
-lines.each do |line|
-  print line[min_indent..-1]
+gemfile do
+  source "https://rubygems.org"
+  gem "clamp"
+end
+
+Clamp do
+
+  option %w[-n --indent-size], "N", "number of leading spaces to remove", &method(:Integer)
+  option %w[--tab-size], "N", "width of tabs", default: 8, &method(:Integer)
+
+  def execute
+    lines = $stdin.map do |line|
+      line.gsub("\t", " " * tab_size)
+    end
+
+    effective_indent_size = indent_size || lines.map { |line| line[/\A */].size || 0 }.min
+
+    lines.each do |line|
+      puts line.sub(/^ {0,#{effective_indent_size}}/, "")
+    end
+  end
+
 end
