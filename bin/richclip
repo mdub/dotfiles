@@ -1,0 +1,27 @@
+#!/usr/bin/osascript -l JavaScript
+
+ObjC.import('AppKit');
+
+function run() {
+    const data = $.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;
+    const content = $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding);
+    const pb = $.NSPasteboard.generalPasteboard;
+    
+    pb.clearContents;
+    
+    // Check if content starts with RTF (any content starting with "{")
+    const contentStr = content.js;
+    if (contentStr.startsWith('{')) {
+        // RTF content
+        pb.declareTypesOwner($.NSArray.arrayWithArray(['public.rtf', 'public.utf8-plain-text']), null);
+        pb.setDataForType(content.dataUsingEncoding($.NSUTF8StringEncoding), 'public.rtf');
+        pb.setStringForType(content, 'public.utf8-plain-text');
+    } else {
+        // HTML content  
+        pb.declareTypesOwner($.NSArray.arrayWithArray(['public.html', 'public.utf8-plain-text']), null);
+        pb.setDataForType(content.dataUsingEncoding($.NSUTF8StringEncoding), 'public.html');
+        pb.setStringForType(content, 'public.utf8-plain-text');
+    }
+    
+    return true;
+}
