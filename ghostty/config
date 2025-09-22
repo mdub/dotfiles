@@ -7,5 +7,6 @@ font-thicken-strength = 128
 
 adjust-cursor-thickness = 1
 macos-titlebar-style = native
+macos-option-as-alt = left
 
 keybind = shift+enter=text:\n
