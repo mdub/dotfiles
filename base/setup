@@ -1,0 +1,7 @@
+#! /bin/bash
+
+dotfiles_dir=$(dirname "$0")/..
+
+rm -rf "$HOME/.dotfiles"
+echo "Creating ~/.dotfiles symlink"
+ln -s "$(realpath "$dotfiles_dir")" "$HOME/.dotfiles"
