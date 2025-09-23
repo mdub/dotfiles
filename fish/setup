@@ -3,7 +3,8 @@
 mkdir -p ~/.config/fish/conf.d
 
 # Homebrew
-test -f ~/.config/fish/conf.d/00-homebrew.fish; or cp (path dirname $0)/00-homebrew.fish ~/.config/fish/conf.d/
+set here (path dirname (status current-filename))
+test -f ~/.config/fish/conf.d/00-homebrew.fish; or cp $here/00-homebrew.fish ~/.config/fish/conf.d/
 
 # Install fisher
 type -q fisher; or curl -sL https://git.io/fisher | source
