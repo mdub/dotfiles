@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-tap "homebrew/core"
-
 brew "asdf"
 brew "aws-iam-authenticator"
 brew "awscli"
