@@ -1,0 +1,32 @@
+#! /usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "clamp"
+end
+
+Clamp do
+
+  parameter "[FILE]", "input file (defaults to stdin)", attribute_name: :input_file
+
+  option %w[-C --force-colors], :flag, "force color output", default: $stdout.tty?
+
+  def execute
+    format_command = %w[xan view -A]
+    format_command += ["--force-colors"] if force_colors?
+    pager = ENV["PAGER"] || "less"
+
+    input = input_file ? File.open(input_file) : $stdin
+    read_pipe, write_pipe = IO.pipe
+
+    spawn(*format_command, in: input, out: write_pipe)
+    write_pipe.close
+    exec(pager, in: read_pipe)
+  ensure
+    input.close if input_file
+  end
+
+end
