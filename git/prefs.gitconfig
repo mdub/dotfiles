@@ -16,6 +16,7 @@
 	please = push --force-with-lease
 	prb = pull --rebase
 	push-upstream = push -u origin HEAD
+	pushup = push -u origin HEAD
 	qpush = push --no-verify
 	qs = status -uno
 	rbi = rebase --interactive
