@@ -1,0 +1,46 @@
+#! /usr/bin/env ruby
+# frozen_string_literal: true
+
+require "English"
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "clamp"
+end
+
+Clamp do
+
+  def git_url
+    `git config --get remote.origin.url`.chomp.tap do
+      signal_error "cannot determine Git URL" unless $CHILD_STATUS.success?
+    end
+  end
+
+  def repo_name(git_url)
+    case git_url
+    when %r{^https://github\.com/(.*?)(.git)?$}
+      Regexp.last_match(1)
+    when %r{^(?:ssh://)?[\w-]+@github\.com[/:](.*?)(.git)?$}
+      Regexp.last_match(1)
+    else
+      signal_error "not a GitHub repository: #{git_url}"
+    end
+  end
+
+  def compare_url(base, head)
+    "https://github.com/#{repo_name(git_url)}/compare/#{base}..#{head}"
+  end
+
+  parameter "BASE", "base commit/ref"
+  parameter "HEAD", "head commit/ref"
+
+  def execute
+    url = compare_url(base, head)
+    puts url
+    system("open", url)
+  end
+
+end
