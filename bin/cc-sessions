@@ -19,18 +19,17 @@ require "time"
 # rubocop:disable Metrics/AbcSize
 # rubocop:disable Metrics/MethodLength
 
-Session = Struct.new(:session_id, :project_dir, :started_at, :updated_at, :title, keyword_init: true)
+Session = Struct.new(:session_id, :project_dir, :started_at, :updated_at, :title, :matching_message, keyword_init: true)
 
 class SessionFinder
-
   DEFAULT_PROJECTS_DIR = File.expand_path("~/.claude/projects")
 
   def initialize(projects_dir: DEFAULT_PROJECTS_DIR)
     @projects_dir = projects_dir
   end
 
-  def find(cutoff_time:, matching: "", limit: nil)
-    pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) unless matching.empty?
+  def find(cutoff_time:, matching: nil, limit: nil)
+    pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
     sessions = []
 
     Dir.glob("#{@projects_dir}/*/*.jsonl").each do |file|
@@ -39,17 +38,18 @@ class SessionFinder
 
       session_id = File.basename(file, ".jsonl")
 
-      result = find_matching_user_message(file, pattern)
+      result = parse_session(file, pattern)
       next unless result
 
-      started_at, cwd, title = result
+      started_at, cwd, custom_title, matching_message = result
 
       sessions << Session.new(
         session_id: session_id,
         project_dir: cwd,
         started_at: started_at,
         updated_at: updated_at,
-        title: title
+        title: custom_title,
+        matching_message: matching_message
       )
     end
 
@@ -60,33 +60,44 @@ class SessionFinder
 
   private
 
-  def find_matching_user_message(file, pattern)
+  def parse_session(file, pattern)
+    return nil if pattern && !File.read(file).match?(pattern)
+
     started_at = nil
     cwd = nil
+    custom_title = nil
+    matching_message = nil
 
     File.foreach(file) do |line|
       entry = Oj.load(line)
+
+      if entry["type"] == "custom-title"
+        custom_title = entry["customTitle"]
+        next
+      end
+
+      next if matching_message
       next unless entry["type"] == "user"
       next unless entry["message"]
 
       content = entry["message"]["content"]
       next unless content.is_a?(String)
+      next if content.start_with?("This session is being continued from a previous conversation")
 
       started_at ||= Time.parse(entry["timestamp"]).localtime
       cwd ||= entry["cwd"]
 
       next if pattern && !pattern.match?(content)
 
-      first_line = content.lines.first&.strip || ""
-      title = first_line[0, 100]
-
-      return [started_at, cwd, title]
+      matching_message = content
     rescue StandardError
       next
     end
-    nil
-  end
 
+    return nil unless matching_message
+
+    [started_at, cwd, custom_title, matching_message]
+  end
 end
 
 Clamp do
@@ -99,7 +110,7 @@ Clamp do
       Integer(s)
     end
 
-    option %w[--matching -m], "STRING", "filter to sessions with a matching user message", default: ""
+    option %w[--matching -m], "STRING", "filter to sessions with a matching user message"
 
     option %w[--limit -n], "N", "maximum number of sessions to show" do |s|
       Integer(s)
@@ -109,7 +120,7 @@ Clamp do
 
     def execute
       if sessions.empty?
-        $stderr.puts "No sessions found"
+        warn "No sessions found"
         return
       end
 
@@ -143,7 +154,8 @@ Clamp do
           project_dir: s.project_dir,
           started_at: s.started_at.utc.iso8601,
           updated_at: s.updated_at.utc.iso8601,
-          title: s.title
+          title: s.title,
+          matching_message: s.matching_message
         }
       end
       puts JSON.pretty_generate(data)
@@ -156,13 +168,29 @@ Clamp do
       "#{date}#{t}#{hms}"
     end
 
+    def format_message(text, pattern)
+      text.lines.map { |l|
+        styled = if pattern
+                   l.rstrip.split(/(#{pattern.source})/i).map { |part|
+                     pattern.match?(part) ? Rainbow(part).underline : Rainbow(part).faint
+                   }.join
+                 else
+                   Rainbow(l.rstrip).faint.to_s
+                 end
+        "  #{Rainbow('|').faint} #{styled}"
+      }.join("\n")
+    end
+
     def print_sessions(sessions)
       Rainbow.enabled = $stdout.tty?
+      pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
       sessions.each do |s|
         project = simplify_path(s.project_dir)
         puts "#{Rainbow(s.session_id).yellow} from #{format_timestamp(s.started_at)} to #{format_timestamp(s.updated_at)}"
+        puts "  #{Rainbow(s.title).bright.white}" if s.title
         puts "  #{Rainbow(project).cyan}"
-        puts "  #{Rainbow(s.title).faint}"
+        message = format_message(s.matching_message, pattern)
+        puts message
         puts
       end
     end
