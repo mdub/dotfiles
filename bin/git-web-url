@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+#! /Users/mikewilliams/.asdf/installs/ruby/3.4.7/bin/ruby
 # frozen_string_literal: true
 
 require "English"
@@ -9,6 +9,7 @@ require "bundler/inline"
 gemfile do
   source "https://rubygems.org"
   gem "clamp"
+  gem "openssl", ">= 3.3.1"
 end
 
 Clamp do
