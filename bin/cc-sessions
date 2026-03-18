@@ -1,0 +1,156 @@
+#! /Users/mikewilliams/.asdf/installs/ruby/3.4.7/bin/ruby
+# frozen_string_literal: true
+
+Gem.paths = { "GEM_HOME" => Gem.user_dir }
+
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "clamp"
+  gem "oj"
+  gem "rainbow"
+end
+
+require "json"
+require "time"
+
+# rubocop:disable Lint/MissingCopEnableDirective
+# rubocop:disable Metrics/AbcSize
+# rubocop:disable Metrics/MethodLength
+
+Session = Struct.new(:session_id, :project_dir, :started_at, :updated_at, :title, keyword_init: true)
+
+class SessionFinder
+
+  DEFAULT_PROJECTS_DIR = File.expand_path("~/.claude/projects")
+
+  def initialize(projects_dir: DEFAULT_PROJECTS_DIR)
+    @projects_dir = projects_dir
+  end
+
+  def find(cutoff_time:, limit: nil)
+    sessions = []
+
+    Dir.glob("#{@projects_dir}/*/*.jsonl").each do |file|
+      updated_at = File.mtime(file)
+      next if updated_at < cutoff_time
+
+      session_id = File.basename(file, ".jsonl")
+
+      started_at, cwd, title = extract_first_user_message(file)
+      next unless title
+
+      sessions << Session.new(
+        session_id: session_id,
+        project_dir: cwd,
+        started_at: started_at,
+        updated_at: updated_at,
+        title: title
+      )
+    end
+
+    results = sessions.sort_by(&:updated_at).reverse
+    results = results.first(limit) if limit
+    results
+  end
+
+  private
+
+  def extract_first_user_message(file)
+    File.foreach(file) do |line|
+      entry = Oj.load(line)
+      next unless entry["type"] == "user"
+      next unless entry["message"]
+
+      content = entry["message"]["content"]
+      next unless content.is_a?(String)
+
+      timestamp = Time.parse(entry["timestamp"]).localtime
+      cwd = entry["cwd"]
+      first_line = content.lines.first&.strip || ""
+      title = first_line[0, 100]
+
+      return [timestamp, cwd, title]
+    rescue StandardError
+      next
+    end
+    nil
+  end
+
+end
+
+Clamp do
+
+  self.description = "Manage Claude Code sessions across all projects"
+
+  subcommand "list", "List recent sessions" do
+
+    option %w[--days -d], "DAYS", "maximum age of sessions (default: 7)", default: 7 do |s|
+      Integer(s)
+    end
+
+    option %w[--limit -n], "N", "maximum number of sessions to show" do |s|
+      Integer(s)
+    end
+
+    option %w[--json -J], :flag, "output as JSON"
+
+    def execute
+      if sessions.empty?
+        $stderr.puts "No sessions found"
+        return
+      end
+
+      if json?
+        print_json(sessions)
+      else
+        print_sessions(sessions)
+      end
+    end
+
+    private
+
+    def sessions
+      @sessions ||= begin
+        cutoff_time = Time.now - (days * 86_400)
+        SessionFinder.new.find(cutoff_time: cutoff_time, limit: limit)
+      end
+    end
+
+    def simplify_path(path)
+      home = ENV["HOME"]
+      return path unless home
+
+      path.sub(home, "~")
+    end
+
+    def print_json(sessions)
+      data = sessions.map do |s|
+        {
+          session_id: s.session_id,
+          project_dir: s.project_dir,
+          started_at: s.started_at.iso8601,
+          updated_at: s.updated_at.iso8601,
+          title: s.title
+        }
+      end
+      puts JSON.pretty_generate(data)
+    end
+
+    def print_sessions(sessions)
+      Rainbow.enabled = $stdout.tty?
+      sessions.each do |s|
+        project = simplify_path(s.project_dir)
+        started = s.started_at.strftime("%Y-%m-%d %H:%M")
+        updated = s.updated_at.strftime("%Y-%m-%d %H:%M")
+        puts "#{Rainbow(s.session_id).yellow} #{started} .. #{updated}"
+        puts "  #{Rainbow(project).cyan}"
+        puts "  #{Rainbow(s.title).faint}"
+        puts
+      end
+    end
+
+  end
+
+end
