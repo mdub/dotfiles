@@ -29,7 +29,8 @@ class SessionFinder
     @projects_dir = projects_dir
   end
 
-  def find(cutoff_time:, limit: nil)
+  def find(cutoff_time:, matching: "", limit: nil)
+    pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) unless matching.empty?
     sessions = []
 
     Dir.glob("#{@projects_dir}/*/*.jsonl").each do |file|
@@ -38,8 +39,10 @@ class SessionFinder
 
       session_id = File.basename(file, ".jsonl")
 
-      started_at, cwd, title = extract_first_user_message(file)
-      next unless title
+      result = find_matching_user_message(file, pattern)
+      next unless result
+
+      started_at, cwd, title = result
 
       sessions << Session.new(
         session_id: session_id,
@@ -57,7 +60,10 @@ class SessionFinder
 
   private
 
-  def extract_first_user_message(file)
+  def find_matching_user_message(file, pattern)
+    started_at = nil
+    cwd = nil
+
     File.foreach(file) do |line|
       entry = Oj.load(line)
       next unless entry["type"] == "user"
@@ -66,12 +72,15 @@ class SessionFinder
       content = entry["message"]["content"]
       next unless content.is_a?(String)
 
-      timestamp = Time.parse(entry["timestamp"]).localtime
-      cwd = entry["cwd"]
+      started_at ||= Time.parse(entry["timestamp"]).localtime
+      cwd ||= entry["cwd"]
+
+      next if pattern && !pattern.match?(content)
+
       first_line = content.lines.first&.strip || ""
       title = first_line[0, 100]
 
-      return [timestamp, cwd, title]
+      return [started_at, cwd, title]
     rescue StandardError
       next
     end
@@ -89,6 +98,8 @@ Clamp do
     option %w[--days -d], "DAYS", "maximum age of sessions (default: 7)", default: 7 do |s|
       Integer(s)
     end
+
+    option %w[--matching -m], "STRING", "filter to sessions with a matching user message", default: ""
 
     option %w[--limit -n], "N", "maximum number of sessions to show" do |s|
       Integer(s)
@@ -114,7 +125,7 @@ Clamp do
     def sessions
       @sessions ||= begin
         cutoff_time = Time.now - (days * 86_400)
-        SessionFinder.new.find(cutoff_time: cutoff_time, limit: limit)
+        SessionFinder.new.find(cutoff_time: cutoff_time, matching: matching, limit: limit)
       end
     end
 
