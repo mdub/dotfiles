@@ -18,10 +18,10 @@ require "time"
 
 # rubocop:disable Lint/MissingCopEnableDirective
 # rubocop:disable Metrics/AbcSize
-# rubocop:disable Metrics/MethodLength
 
 Session = Struct.new(:session_id, :project_dir, :started_at, :updated_at, :title, :matching_message, keyword_init: true)
 
+# Searches Claude Code session JSONL files.
 class SessionFinder
   DEFAULT_PROJECTS_DIR = File.expand_path("~/.claude/projects")
 
@@ -31,87 +31,92 @@ class SessionFinder
 
   def find(cutoff_time:, matching: nil, limit: nil)
     pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
+    sessions = find_sessions(cutoff_time, pattern)
+    sessions = sessions.last(limit) if limit
+    sessions
+  end
+
+  private
+
+  def find_sessions(cutoff_time, pattern)
     sessions = []
 
     Dir.glob("#{@projects_dir}/*/*.jsonl").each do |file|
       updated_at = File.mtime(file)
       next if updated_at < cutoff_time
 
-      session_id = File.basename(file, ".jsonl")
+      session = parse_session(file, pattern)
+      next unless session
 
-      result = parse_session(file, pattern)
-      next unless result
-
-      started_at, cwd, custom_title, matching_message = result
-
-      sessions << Session.new(
-        session_id: session_id,
-        project_dir: cwd,
-        started_at: started_at,
-        updated_at: updated_at,
-        title: custom_title,
-        matching_message: matching_message
-      )
+      session.session_id = File.basename(file, ".jsonl")
+      session.updated_at = updated_at
+      sessions << session
     end
 
-    results = sessions.sort_by(&:started_at)
-    results = results.last(limit) if limit
-    results
+    sessions.sort_by(&:started_at)
   end
-
-  private
 
   def parse_session(file, pattern)
     return nil if pattern && !File.read(file).match?(pattern)
 
-    started_at = nil
-    cwd = nil
-    custom_title = nil
-    matching_message = nil
-
+    state = { title: nil, message: nil, started_at: nil, cwd: nil }
     File.foreach(file) do |line|
-      entry = Oj.load(line)
-
-      if entry["type"] == "custom-title"
-        custom_title = entry["customTitle"]
-        next
-      end
-
-      next if matching_message
-      next unless entry["type"] == "user"
-      next unless entry["permissionMode"]
-
-      content = entry.dig("message", "content")
-      next unless content.is_a?(String)
-
-      started_at ||= Time.parse(entry["timestamp"]).localtime
-      cwd ||= entry["cwd"]
-
-      next if pattern && !pattern.match?(content)
-
-      matching_message = content
+      parse_session_line(Oj.load(line), pattern, state)
     rescue StandardError
       next
     end
 
-    return nil unless matching_message
+    return nil unless state[:message]
 
-    [started_at, cwd, custom_title, matching_message]
+    Session.new(
+      started_at: state[:started_at],
+      project_dir: state[:cwd],
+      title: state[:title],
+      matching_message: state[:message]
+    )
+  end
+
+  def parse_session_line(entry, pattern, state)
+    if entry["type"] == "custom-title"
+      state[:title] = entry["customTitle"]
+      return
+    end
+
+    return if state[:message]
+
+    user_content = extract_user_content(entry)
+    return unless user_content
+
+    record_user_message(entry, user_content, pattern, state)
+  end
+
+  def record_user_message(entry, content, pattern, state)
+    state[:started_at] ||= Time.parse(entry["timestamp"]).localtime
+    state[:cwd] ||= entry["cwd"]
+    state[:message] = content unless pattern && !pattern.match?(content)
+  end
+
+  def extract_user_content(entry)
+    return unless entry["type"] == "user"
+    return unless entry["permissionMode"]
+
+    content = entry.dig("message", "content")
+    content if content.is_a?(String)
   end
 end
 
-Clamp do
+Clamp do # rubocop:disable Metrics/BlockLength
 
   self.description = "Manage Claude Code sessions across all projects"
 
-  option %w[--days -d], "DAYS", "maximum age of sessions (default: 7)", default: 7 do |s|
-    Integer(s)
+  option %w[--days -d], "DAYS", "maximum age of sessions (default: 7)", default: 7 do |val|
+    Integer(val)
   end
 
   option %w[--matching -m], "STRING", "filter to sessions with a matching user message"
 
-  option %w[--limit -n], "N", "maximum number of sessions to show" do |s|
-    Integer(s)
+  option %w[--limit -n], "N", "maximum number of sessions to show" do |val|
+    Integer(val)
   end
 
   def sessions
@@ -122,7 +127,7 @@ Clamp do
   end
 
   def simplify_path(path)
-    home = ENV["HOME"]
+    home = ENV.fetch("HOME", nil)
     return path unless home
 
     path.sub(home, "~")
@@ -130,18 +135,18 @@ Clamp do
 
   option %w[--json -J], :flag, "output as JSON"
 
-  def session_display_name(s)
-    s.title || s.matching_message.lines.first&.strip&.slice(0, 80) || s.session_id
+  def session_display_name(session)
+    session.title || session.matching_message.lines.first&.strip&.slice(0, 80) || session.session_id
   end
 
-  def session_to_hash(s)
+  def session_to_hash(session)
     {
-      session_id: s.session_id,
-      project_dir: s.project_dir,
-      started_at: s.started_at.utc.iso8601,
-      updated_at: s.updated_at.utc.iso8601,
-      title: s.title,
-      matching_message: s.matching_message
+      session_id: session.session_id,
+      project_dir: session.project_dir,
+      started_at: session.started_at.utc.iso8601,
+      updated_at: session.updated_at.utc.iso8601,
+      title: session.title,
+      matching_message: session.matching_message
     }
   end
 
@@ -153,61 +158,68 @@ Clamp do
   end
 
   def format_message(text, pattern)
-    text.lines.map { |l|
+    text.lines.map do |l|
       styled = if pattern
-                 l.rstrip.split(/(#{pattern.source})/i).map { |part|
+                 l.rstrip.split(/(#{pattern.source})/i).map do |part|
                    pattern.match?(part) ? Rainbow(part).underline : Rainbow(part).faint
-                 }.join
+                 end.join
                else
                  Rainbow(l.rstrip).faint.to_s
                end
       "  #{Rainbow('|').faint} #{styled}"
-    }.join("\n")
+    end.join("\n")
   end
 
-  def format_session(s, pattern: nil)
+  def format_session(session, pattern: nil)
     lines = []
-    lines << "#{Rainbow(s.session_id).yellow} from #{format_timestamp(s.started_at)} to #{format_timestamp(s.updated_at)}"
-    lines << "  #{Rainbow(s.title).bright.white}" if s.title
-    lines << "  #{Rainbow(simplify_path(s.project_dir)).cyan}"
-    lines << format_message(s.matching_message, pattern)
+    sid = Rainbow(session.session_id).yellow
+    lines << "#{sid} from #{format_timestamp(session.started_at)} to #{format_timestamp(session.updated_at)}"
+    lines << "  #{Rainbow(session.title).bright.white}" if session.title
+    lines << "  #{Rainbow(simplify_path(session.project_dir)).cyan}"
+    lines << format_message(session.matching_message, pattern)
     lines.join("\n")
   end
 
   subcommand "list", "List recent sessions" do
 
     def execute
-      if sessions.empty?
-        warn "No sessions found"
-        return
-      end
+      return warn_no_sessions if sessions.empty?
 
       if json?
-        puts JSON.pretty_generate(sessions.map { |s| session_to_hash(s) })
+        puts JSON.pretty_generate(sessions.map { |session| session_to_hash(session) })
       else
         Rainbow.enabled = $stdout.tty?
-        pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
-        sessions.each { |s| puts format_session(s, pattern: pattern); puts }
+        pattern = matching_pattern
+        sessions.each do |session|
+          puts format_session(session, pattern: pattern)
+          puts
+        end
       end
     end
 
   end
 
   def pick_session
-    if sessions.empty?
-      warn "No sessions found"
-      return nil
-    end
+    return warn_no_sessions if sessions.empty?
 
     Rainbow.enabled = true
-    pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
-    items = sessions.reverse.map { |s| "#{format_session(s, pattern: pattern)}\n" }
+    pattern = matching_pattern
+    items = sessions.reverse.map { |session| "#{format_session(session, pattern: pattern)}\n" }
 
     selected_text = fzf_select(items)
     return nil unless selected_text
 
-    session_id = selected_text.lines.first&.split&.first
-    sessions.find { |s| s.session_id == session_id }
+    selected_id = selected_text.lines.first&.split&.first
+    sessions.find { |session| session.session_id == selected_id }
+  end
+
+  def warn_no_sessions
+    warn "No sessions found"
+    nil
+  end
+
+  def matching_pattern
+    Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
   end
 
   def fzf_select(items)
@@ -253,9 +265,7 @@ Clamp do
         puts "cd #{selected.project_dir}" if selected.project_dir
         puts Shellwords.join(cmd)
       else
-        if selected.project_dir && File.directory?(selected.project_dir)
-          Dir.chdir(selected.project_dir)
-        end
+        Dir.chdir(selected.project_dir) if selected.project_dir && File.directory?(selected.project_dir)
         exec(*cmd)
       end
     end

@@ -1,3 +1,5 @@
+AllCops:
+  NewCops: enable
 Layout/EmptyLinesAroundBlockBody:
   Enabled: false
   EnforcedStyle: empty_lines
