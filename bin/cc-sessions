@@ -130,8 +130,8 @@ Clamp do
         {
           session_id: s.session_id,
           project_dir: s.project_dir,
-          started_at: s.started_at.iso8601,
-          updated_at: s.updated_at.iso8601,
+          started_at: s.started_at.utc.iso8601,
+          updated_at: s.updated_at.utc.iso8601,
           title: s.title
         }
       end
@@ -142,9 +142,11 @@ Clamp do
       Rainbow.enabled = $stdout.tty?
       sessions.each do |s|
         project = simplify_path(s.project_dir)
-        started = s.started_at.strftime("%Y-%m-%d %H:%M")
-        updated = s.updated_at.strftime("%Y-%m-%d %H:%M")
-        puts "#{Rainbow(s.session_id).yellow} #{started} .. #{updated}"
+        t = Rainbow("T").faint
+        fmt = "%Y-%m-%d#{t}%H:%M:%S"
+        started = s.started_at.strftime(fmt)
+        updated = s.updated_at.strftime(fmt)
+        puts "#{Rainbow(s.session_id).yellow} from #{started} to #{updated}"
         puts "  #{Rainbow(project).cyan}"
         puts "  #{Rainbow(s.title).faint}"
         puts
