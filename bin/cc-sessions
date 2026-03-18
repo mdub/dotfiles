@@ -13,6 +13,7 @@ gemfile do
 end
 
 require "json"
+require "shellwords"
 require "time"
 
 # rubocop:disable Lint/MissingCopEnableDirective
@@ -192,24 +193,41 @@ Clamp do
 
   end
 
+  def pick_session
+    if sessions.empty?
+      warn "No sessions found"
+      return nil
+    end
+
+    Rainbow.enabled = true
+    pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
+    items = sessions.reverse.map { |s| "#{format_session(s, pattern: pattern)}\n" }
+
+    selected_text = fzf_select(items)
+    return nil unless selected_text
+
+    session_id = selected_text.lines.first&.split&.first
+    sessions.find { |s| s.session_id == session_id }
+  end
+
+  def fzf_select(items)
+    IO.popen(["fzf", "--read0", "--print0", "--ansi", "--no-sort"], "r+") do |io|
+      io.write(items.join("\0"))
+      io.close_write
+      result = io.read.chomp("\0")
+      return nil if result.empty?
+
+      result
+    end
+  rescue Errno::ENOENT
+    warn "fzf is required"
+    nil
+  end
+
   subcommand "select", "Interactively select a session" do
 
     def execute
-      if sessions.empty?
-        warn "No sessions found"
-        return
-      end
-
-      Rainbow.enabled = true
-      pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
-      items = sessions.reverse.map { |s| "#{format_session(s, pattern: pattern)}\n" }
-
-      selected_text = fzf_select(items)
-      return unless selected_text
-
-      # Match by session ID (first thing on the first line)
-      session_id = selected_text.lines.first&.split&.first
-      selected = sessions.find { |s| s.session_id == session_id }
+      selected = pick_session
       return unless selected
 
       if json?
@@ -219,20 +237,27 @@ Clamp do
       end
     end
 
-    private
+  end
 
-    def fzf_select(items)
-      IO.popen(["fzf", "--read0", "--print0", "--ansi", "--no-sort"], "r+") do |io|
-        io.write(items.join("\0"))
-        io.close_write
-        result = io.read.chomp("\0")
-        return nil if result.empty?
+  subcommand "resume", "Select and resume a session" do
 
-        result
+    option %w[--commands], :flag, "print commands instead of executing"
+
+    def execute
+      selected = pick_session
+      return unless selected
+
+      cmd = ["claude", "--resume", selected.session_id]
+
+      if commands?
+        puts "cd #{selected.project_dir}" if selected.project_dir
+        puts Shellwords.join(cmd)
+      else
+        if selected.project_dir && File.directory?(selected.project_dir)
+          Dir.chdir(selected.project_dir)
+        end
+        exec(*cmd)
       end
-    rescue Errno::ENOENT
-      warn "fzf is required for 'select'"
-      nil
     end
 
   end
