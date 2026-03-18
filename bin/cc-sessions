@@ -78,11 +78,10 @@ class SessionFinder
 
       next if matching_message
       next unless entry["type"] == "user"
-      next unless entry["message"]
+      next unless entry["permissionMode"]
 
-      content = entry["message"]["content"]
+      content = entry.dig("message", "content")
       next unless content.is_a?(String)
-      next if content.start_with?("This session is being continued from a previous conversation")
 
       started_at ||= Time.parse(entry["timestamp"]).localtime
       cwd ||= entry["cwd"]
