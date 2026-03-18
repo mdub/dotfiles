@@ -149,15 +149,18 @@ Clamp do
       puts JSON.pretty_generate(data)
     end
 
+    def format_timestamp(time)
+      date = Rainbow(time.strftime("%Y-%m-%d")).green
+      t = Rainbow("T").faint
+      hms = Rainbow(time.strftime("%H:%M:%S")).green
+      "#{date}#{t}#{hms}"
+    end
+
     def print_sessions(sessions)
       Rainbow.enabled = $stdout.tty?
       sessions.each do |s|
         project = simplify_path(s.project_dir)
-        t = Rainbow("T").faint
-        fmt = "%Y-%m-%d#{t}%H:%M:%S"
-        started = s.started_at.strftime(fmt)
-        updated = s.updated_at.strftime(fmt)
-        puts "#{Rainbow(s.session_id).yellow} from #{started} to #{updated}"
+        puts "#{Rainbow(s.session_id).yellow} from #{format_timestamp(s.started_at)} to #{format_timestamp(s.updated_at)}"
         puts "  #{Rainbow(project).cyan}"
         puts "  #{Rainbow(s.title).faint}"
         puts
