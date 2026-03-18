@@ -254,12 +254,14 @@ Clamp do # rubocop:disable Metrics/BlockLength
   subcommand "resume", "Select and resume a session" do
 
     option %w[--commands], :flag, "print commands instead of executing"
+    option %w[--dangerously-skip-permissions --yolo], :flag, "skip permission checks when resuming"
 
     def execute
       selected = pick_session
       return unless selected
 
       cmd = ["claude", "--resume", selected.session_id]
+      cmd << "--dangerously-skip-permissions" if dangerously_skip_permissions?
 
       if commands?
         puts "cd #{selected.project_dir}" if selected.project_dir
