@@ -101,7 +101,10 @@ class SessionFinder
     return unless entry["permissionMode"]
 
     content = entry.dig("message", "content")
-    content if content.is_a?(String)
+    return unless content.is_a?(String)
+    return if content.start_with?("<") # filter out system-injected messages
+
+    content
   end
 end
 
