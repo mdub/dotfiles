@@ -185,13 +185,19 @@ Clamp do # rubocop:disable Metrics/BlockLength
 
   subcommand "list", "List recent sessions" do
 
+    option "--[no-]color", :flag, "enable/disable color output"
+
+    def default_color?
+      $stdout.tty?
+    end
+
     def execute
       return warn_no_sessions if sessions.empty?
 
       if json?
         puts JSON.pretty_generate(sessions.map { |session| session_to_hash(session) })
       else
-        Rainbow.enabled = $stdout.tty?
+        Rainbow.enabled = color?
         pattern = matching_pattern
         sessions.each do |session|
           puts format_session(session, pattern: pattern)
