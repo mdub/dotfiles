@@ -254,7 +254,7 @@ Clamp do # rubocop:disable Metrics/BlockLength
   subcommand "resume", "Select and resume a session" do
 
     option %w[--commands], :flag, "print commands instead of executing"
-    option %w[--dangerously-skip-permissions --yolo], :flag, "skip permission checks when resuming"
+    option %w[--dangerously-skip-permissions --yolo -Y], :flag, "skip permission checks when resuming"
 
     def execute
       selected = pick_session
