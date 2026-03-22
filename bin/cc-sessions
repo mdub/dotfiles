@@ -19,7 +19,7 @@ require "time"
 # rubocop:disable Lint/MissingCopEnableDirective
 # rubocop:disable Metrics/AbcSize
 
-Session = Struct.new(:session_id, :project_dir, :started_at, :updated_at, :title, :matching_message, keyword_init: true)
+Session = Struct.new(:session_id, :transcript_path, :project_dir, :started_at, :updated_at, :title, :matching_message, keyword_init: true)
 
 # Searches Claude Code session JSONL files.
 class SessionFinder
@@ -49,6 +49,7 @@ class SessionFinder
       next unless session
 
       session.session_id = File.basename(file, ".jsonl")
+      session.transcript_path = file
       session.updated_at = updated_at
       sessions << session
     end
@@ -145,6 +146,7 @@ Clamp do # rubocop:disable Metrics/BlockLength
   def session_to_hash(session)
     {
       session_id: session.session_id,
+      transcript_path: session.transcript_path,
       project_dir: session.project_dir,
       started_at: session.started_at.utc.iso8601,
       updated_at: session.updated_at.utc.iso8601,
