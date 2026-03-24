@@ -14,8 +14,14 @@ end
 
 Clamp do
 
+  def git_remote
+    remote = `git config --get branch.#{git_branch}.remote`.chomp
+    remote = "origin" unless $CHILD_STATUS.success?
+    remote
+  end
+
   def git_url
-    `git config --get remote.origin.url`.chomp.tap do
+    `git config --get remote.#{git_remote}.url`.chomp.tap do
       signal_error "cannot determine Git URL" unless $CHILD_STATUS.success?
     end
   end
