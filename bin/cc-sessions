@@ -19,7 +19,8 @@ require "time"
 # rubocop:disable Lint/MissingCopEnableDirective
 # rubocop:disable Metrics/AbcSize
 
-Session = Struct.new(:session_id, :transcript_path, :project_dir, :started_at, :updated_at, :title, :matching_message, keyword_init: true)
+Session = Struct.new(:session_id, :transcript_path, :project_dir, :started_at, :updated_at, :title, :matching_message,
+                     keyword_init: true)
 
 # Searches Claude Code session JSONL files.
 class SessionFinder
@@ -279,7 +280,9 @@ Clamp do # rubocop:disable Metrics/BlockLength
         puts Shellwords.join(cmd)
       else
         Dir.chdir(selected.project_dir) if selected.project_dir && File.directory?(selected.project_dir)
-        exec(*cmd)
+        Bundler.with_unbundled_env do
+          exec(*cmd)
+        end
       end
     end
 
