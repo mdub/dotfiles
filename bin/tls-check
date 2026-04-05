@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+#! /opt/homebrew/opt/ruby/bin/ruby
 # frozen_string_literal: true
 
 require "clamp"
