@@ -1,4 +1,4 @@
-#! /Users/mikewilliams/.asdf/installs/ruby/3.4.7/bin/ruby
+#! /usr/bin/env mdub-dotfiles-ruby
 # frozen_string_literal: true
 
 Gem.paths = { "GEM_HOME" => Gem.user_dir }

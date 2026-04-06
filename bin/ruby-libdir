@@ -1,4 +1,4 @@
-#! /opt/homebrew/opt/ruby/bin/ruby
+#! /usr/bin/env mdub-dotfiles-ruby
 # frozen_string_literal: true
 
 require "rbconfig"

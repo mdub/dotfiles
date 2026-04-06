@@ -1,4 +1,4 @@
-#! /opt/homebrew/opt/ruby/bin/ruby
+#! /usr/bin/env mdub-dotfiles-ruby
 # frozen_string_literal: true
 
 Gem.paths = { "GEM_HOME" => Gem.user_dir }
