@@ -30,23 +30,23 @@ class SessionFinder
     @projects_dir = projects_dir
   end
 
-  def find(cutoff_time:, matching: nil, limit: nil)
+  def find(cutoff_time:, matching: nil, limit: nil, include_assistant: false)
     pattern = Regexp.new(Regexp.escape(matching), Regexp::IGNORECASE) if matching
-    sessions = find_sessions(cutoff_time, pattern)
+    sessions = find_sessions(cutoff_time, pattern, include_assistant)
     sessions = sessions.last(limit) if limit
     sessions
   end
 
   private
 
-  def find_sessions(cutoff_time, pattern)
+  def find_sessions(cutoff_time, pattern, include_assistant)
     sessions = []
 
     Dir.glob("#{@projects_dir}/*/*.jsonl").each do |file|
       updated_at = File.mtime(file)
       next if updated_at < cutoff_time
 
-      session = parse_session(file, pattern)
+      session = parse_session(file, pattern, include_assistant)
       next unless session
 
       session.session_id = File.basename(file, ".jsonl")
@@ -58,12 +58,12 @@ class SessionFinder
     sessions.sort_by(&:started_at)
   end
 
-  def parse_session(file, pattern)
+  def parse_session(file, pattern, include_assistant)
     return nil if pattern && !File.read(file).match?(pattern)
 
     state = { title: nil, message: nil, started_at: nil, cwd: nil }
     File.foreach(file) do |line|
-      parse_session_line(Oj.load(line), pattern, state)
+      parse_session_line(Oj.load(line), pattern, include_assistant, state)
     rescue StandardError
       next
     end
@@ -78,23 +78,33 @@ class SessionFinder
     )
   end
 
-  def parse_session_line(entry, pattern, state)
+  def parse_session_line(entry, pattern, include_assistant, state)
     if entry["type"] == "custom-title"
       state[:title] = entry["customTitle"]
       return
     end
 
+    user_content = extract_user_content(entry)
+    if user_content
+      state[:started_at] ||= Time.parse(entry["timestamp"]).localtime
+      state[:cwd] ||= entry["cwd"]
+      record_match(user_content, pattern, state)
+      return
+    end
+
+    return unless include_assistant
     return if state[:message]
 
-    user_content = extract_user_content(entry)
-    return unless user_content
+    assistant_content = extract_assistant_content(entry)
+    return unless assistant_content
+    return unless pattern && pattern.match?(assistant_content)
 
-    record_user_message(entry, user_content, pattern, state)
+    state[:message] = assistant_content
   end
 
-  def record_user_message(entry, content, pattern, state)
-    state[:started_at] ||= Time.parse(entry["timestamp"]).localtime
-    state[:cwd] ||= entry["cwd"]
+  def record_match(content, pattern, state)
+    return if state[:message]
+
     state[:message] = content unless pattern && !pattern.match?(content)
   end
 
@@ -108,6 +118,20 @@ class SessionFinder
 
     content
   end
+
+  def extract_assistant_content(entry)
+    return unless entry["type"] == "assistant"
+
+    content = entry.dig("message", "content")
+    return unless content.is_a?(Array)
+
+    text_parts = content.filter_map do |block|
+      block["text"] if block.is_a?(Hash) && block["type"] == "text"
+    end
+    return if text_parts.empty?
+
+    text_parts.join("\n")
+  end
 end
 
 Clamp do # rubocop:disable Metrics/BlockLength
@@ -120,6 +144,8 @@ Clamp do # rubocop:disable Metrics/BlockLength
 
   option %w[--matching -m], "STRING", "filter to sessions with a matching user message"
 
+  option %w[--include-assistant -a], :flag, "also match against assistant messages"
+
   option %w[--limit -n], "N", "maximum number of sessions to show" do |val|
     Integer(val)
   end
@@ -127,7 +153,12 @@ Clamp do # rubocop:disable Metrics/BlockLength
   def sessions
     @sessions ||= begin
       cutoff_time = Time.now - (days * 86_400)
-      SessionFinder.new.find(cutoff_time: cutoff_time, matching: matching, limit: limit)
+      SessionFinder.new.find(
+        cutoff_time: cutoff_time,
+        matching: matching,
+        limit: limit,
+        include_assistant: include_assistant?
+      )
     end
   end
 
