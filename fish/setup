@@ -7,7 +7,7 @@ set here (path dirname (status current-filename))
 test -f ~/.config/fish/conf.d/00-homebrew.fish; or cp $here/00-homebrew.fish ~/.config/fish/conf.d/
 
 # Install fisher
-type -q fisher; or curl -sL https://git.io/fisher | source
+type -q fisher; or curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
 
 fisher install jorgebucaran/fisher
 fisher install danhper/fish-ssh-agent

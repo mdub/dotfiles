@@ -1,4 +1,4 @@
-alias g=hub
+alias g=git
 alias lg=lazygit
 
 alias ga='g add'

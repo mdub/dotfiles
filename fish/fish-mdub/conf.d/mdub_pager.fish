@@ -1,3 +1,3 @@
 alias v=bat
 
-set -x PAGER bat
+set -x PAGER less
