@@ -7,9 +7,7 @@ alias gc='g commit'
 alias gco="g checkout"
 alias gd="g diff"
 alias gdc="g diff --cached"
-alias gs="GIT_PAGER= g status"
+alias gs="g status"
 alias gp="g pull"
 alias gpr="g pull --rebase"
 alias gri="g rebase -i origin/master"
-
-set -x GH_PAGER less
