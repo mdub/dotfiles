@@ -1,0 +1,29 @@
+#! /bin/bash
+
+# Link pi themes and extensions into the pi agent directory.
+# Symlinks, not copies: editing either path edits the same file, and pi
+# hot-reloads the active theme when it changes on disk.
+
+set -euo pipefail
+
+# CDPATH is exported in this environment, which makes `cd` echo its target;
+# blank it so the command substitution captures only `pwd`.
+here="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+
+link() {
+  local src="$1" dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+    echo "skipping $dest (exists, and is not a symlink)"
+    return
+  fi
+  ln -sfn "$src" "$dest"
+  echo "linked $(basename "$dest")"
+}
+
+link "$here/themes/dark-github.json" "$agent_dir/themes/dark-github.json"
+
+for extension in "$here"/extensions/*.ts; do
+  link "$extension" "$agent_dir/extensions/$(basename "$extension")"
+done
