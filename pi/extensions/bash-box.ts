@@ -140,6 +140,8 @@ export default function (pi: ExtensionAPI) {
 	if (!config.enabled) return;
 
 	const b = BORDERS[config.border] ?? BORDERS.rounded;
+	// Fallback cwd only: the built-in resolves `ctx?.cwd || cwd` per call, and
+	// execute() below passes the live ctx through.
 	const definition = createBashToolDefinition(process.cwd()) as any;
 
 	pi.registerTool({
