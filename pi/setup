@@ -22,7 +22,7 @@ link() {
   echo "linked $(basename "$dest")"
 }
 
-link "$here/themes/dark-github.json" "$agent_dir/themes/dark-github.json"
+link "$here/themes/mw-dark.json" "$agent_dir/themes/mw-dark.json"
 
 for extension in "$here"/extensions/*.ts; do
   link "$extension" "$agent_dir/extensions/$(basename "$extension")"

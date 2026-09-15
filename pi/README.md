@@ -6,7 +6,7 @@ Run `~/.dotfiles/pi/setup` to symlink the theme and extensions into `~/.pi/agent
 
 ## What's here
 
-- `themes/dark-github.json` — GitHub dark theme, ported from [oh-my-pi](https://github.com/can1357/oh-my-pi). Carries pi's 51 required colour tokens plus the optional four, and keeps oh-my-pi's non-standard `statusLine*` tokens. Pi's schema ignores unknown tokens but still compiles them into its colour map, so an extension can read them via `theme.fg("statusLineModel", …)`. They land in the *foreground* map only — for a background, rewrite the SGR parameter: `getFgAnsi(t).replace("\x1b[38;", "\x1b[48;")`.
+- `themes/mw-dark.json` — GitHub dark theme, ported from [oh-my-pi](https://github.com/can1357/oh-my-pi). Carries pi's 51 required colour tokens plus the optional four, and keeps oh-my-pi's non-standard `statusLine*` tokens. Pi's schema ignores unknown tokens but still compiles them into its colour map, so an extension can read them via `theme.fg("statusLineModel", …)`. They land in the *foreground* map only — for a background, rewrite the SGR parameter: `getFgAnsi(t).replace("\x1b[38;", "\x1b[48;")`.
 - `extensions/bash-box.ts` — draws a rounded box around bash tool calls, with an `── Output` divider and a wall-time footer. Uses `renderShell: "self"` plus `renderCall`/`renderResult`; execution delegates to the built-in bash tool. Configurable under `bashBox` in settings (`enabled`, `border`, `previewLines`).
 - `extensions/permission-gate.ts` — confirms before running dangerous bash commands.
 
@@ -22,7 +22,7 @@ pi install npm:pi-powerline-footer    # powerline status bar
 pi install npm:pi-auto-session-name   # names sessions automatically
 ```
 
-Then set `"theme": "dark-github"` (or pick it in `/settings`).
+Then set `"theme": "mw-dark"` (or pick it in `/settings`).
 
 **`cmux-session.ts`** — installed and upgraded in place by `cmux hooks pi install`; it's cmux's artifact, not config.
 

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
-	"name": "dark-github",
+	"name": "mw-dark",
 	"vars": {
 		"bg": "#0d1117",
 		"bgElevated": "#161b22",
@@ -44,8 +44,8 @@
 		"scrollbarThumb": "border",
 		"searchMatchBg": "#9e6a03",
 		"searchMatchText": "#f0f6fc",
-		"userMessageBg": "bgElevated",
-		"userMessageText": "",
+		"userMessageBg": "#243B53",
+		"userMessageText": "#F0F6FC",
 		"customMessageBg": "#1c1f26",
 		"customMessageText": "",
 		"customMessageLabel": "purple",
@@ -60,7 +60,7 @@
 		"mdLinkUrl": "textDim",
 		"mdCode": "blueLight",
 		"mdCodeBlock": "text",
-		"mdCodeBlockBorder": "borderMuted",
+		"mdCodeBlockBorder": "textDim",
 		"mdQuote": "textMuted",
 		"mdQuoteBorder": "borderMuted",
 		"mdHr": "border",
