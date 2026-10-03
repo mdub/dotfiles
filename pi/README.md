@@ -9,6 +9,7 @@ Run `~/.dotfiles/pi/setup` to symlink the theme and extensions into `~/.pi/agent
 - `themes/mw-dark.json` — GitHub dark theme, ported from [oh-my-pi](https://github.com/can1357/oh-my-pi). Carries pi's 51 required colour tokens plus the optional four, and keeps oh-my-pi's non-standard `statusLine*` tokens. Pi's schema ignores unknown tokens but still compiles them into its colour map, so an extension can read them via `theme.fg("statusLineModel", …)`. They land in the *foreground* map only — for a background, rewrite the SGR parameter: `getFgAnsi(t).replace("\x1b[38;", "\x1b[48;")`.
 - `extensions/bash-box.ts` — draws a rounded box around bash tool calls, with an `── Output` divider and a wall-time footer. Uses `renderShell: "self"` plus `renderCall`/`renderResult`; execution delegates to the built-in bash tool. Configurable under `bashBox` in settings (`enabled`, `border`, `previewLines`).
 - `extensions/permission-gate.ts` — confirms before running dangerous bash commands.
+- `extensions/agents-local.ts` — loads uncommitted `AGENTS.local.md` files into the project context, next to the `AGENTS.md` files pi already loads. It checks every directory from the working directory up to the git repository root, and re-reads the files before each agent run.
 
 ## Not here, on purpose
 
