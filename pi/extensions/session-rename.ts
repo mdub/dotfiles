@@ -6,9 +6,11 @@
  * request rather than through a separate model call.
  *
  * Everything the model sees is kept cache-friendly: the tool and its guidelines are
- * static, and name changes reach the model only as messages appended to the transcript.
+ * static, and everything else reaches the model as messages appended to the transcript.
  *
- * - After a rename, the tool refuses further renames for a few more prompts.
+ * - Standing guidelines alone rarely get acted on, so the extension attaches a short
+ *   reminder to user prompts at Fibonacci spacing (prompts 1, 2, 3, 5, 8, 13, 21, …), with
+ *   the gap capped at 21 prompts.
  * - A name set by the user (e.g. `/name`) is left alone until the user clears it, or runs
  *   `/auto-session-name`, which asks the model to (re)name the session now.
  * - The tool is hidden in sessions without a UI, such as sub-agents.
@@ -19,9 +21,10 @@ import { Type } from "typebox";
 
 const TOOL_NAME = "set_session_name";
 const NAME_MESSAGE_TYPE = "session-name";
+const NUDGE_MESSAGE_TYPE = "session-name-nudge";
 const MANUAL_ENTRY_TYPE = "session-name-manual";
 const REQUEST_MESSAGE_TYPE = "session-name-request";
-const PROMPTS_BETWEEN_RENAMES = 5;
+const MAX_PROMPTS_BETWEEN_NUDGES = 21;
 const MAX_NAME_CHARS = 80;
 
 interface RenameDetails {
@@ -50,34 +53,12 @@ function isRenameResult(entry: SessionEntry): boolean {
 	);
 }
 
-function countPrompts(branch: SessionEntry[], since?: (entry: SessionEntry) => boolean): number {
-	let count = 0;
-	for (let i = branch.length - 1; i >= 0; i--) {
-		const entry = branch[i]!;
-		if (since?.(entry)) break;
-		if (isUserPrompt(entry)) count++;
-	}
-	return count;
+function isNudge(entry: SessionEntry): boolean {
+	return entry.type === "custom_message" && entry.customType === NUDGE_MESSAGE_TYPE;
 }
 
-function hasRenamed(branch: SessionEntry[]): boolean {
-	return branch.some(isRenameResult);
-}
-
-function cooldownMessage(branch: SessionEntry[]): string | undefined {
-	if (!hasRenamed(branch)) return undefined;
-	const prompts = countPrompts(branch, isRenameResult);
-	if (prompts >= PROMPTS_BETWEEN_RENAMES) return undefined;
-	return `Renamed too recently (${prompts} of ${PROMPTS_BETWEEN_RENAMES} user prompts since)`;
-}
-
-function isRenameRequested(branch: SessionEntry[]): boolean {
-	for (let i = branch.length - 1; i >= 0; i--) {
-		const entry = branch[i]!;
-		if (entry.type === "custom_message" && entry.customType === REQUEST_MESSAGE_TYPE) return true;
-		if (isRenameResult(entry) || isUserPrompt(entry)) return false;
-	}
-	return false;
+function countPrompts(entries: SessionEntry[]): number {
+	return entries.filter(isUserPrompt).length;
 }
 
 function isManuallyNamed(branch: SessionEntry[]): boolean {
@@ -90,10 +71,19 @@ function isManuallyNamed(branch: SessionEntry[]): boolean {
 	return false;
 }
 
+function isRenameRequested(branch: SessionEntry[]): boolean {
+	for (let i = branch.length - 1; i >= 0; i--) {
+		const entry = branch[i]!;
+		if (entry.type === "custom_message" && entry.customType === REQUEST_MESSAGE_TYPE) return true;
+		if (isRenameResult(entry) || isUserPrompt(entry)) return false;
+	}
+	return false;
+}
+
 function lastAnnouncedName(branch: SessionEntry[]): string | undefined {
 	for (let i = branch.length - 1; i >= 0; i--) {
 		const entry = branch[i]!;
-		if (entry.type === "custom_message" && entry.customType === NAME_MESSAGE_TYPE) {
+		if (entry.type === "custom_message" && (entry.customType === NAME_MESSAGE_TYPE || isNudge(entry))) {
 			return (entry.details as NameMessageDetails | undefined)?.name;
 		}
 		if (isRenameResult(entry) && entry.type === "message" && entry.message.role === "toolResult") {
@@ -101,6 +91,17 @@ function lastAnnouncedName(branch: SessionEntry[]): string | undefined {
 		}
 	}
 	return undefined;
+}
+
+/** Whether user prompt number `prompt` (1-based) gets a naming reminder. */
+function isNudgePrompt(prompt: number): boolean {
+	let nudgeAt = 1;
+	let [gap, nextGap] = [1, 1];
+	while (nudgeAt < prompt) {
+		nudgeAt += Math.min(gap, MAX_PROMPTS_BETWEEN_NUDGES);
+		[gap, nextGap] = [nextGap, gap + nextGap];
+	}
+	return nudgeAt === prompt;
 }
 
 function normalizeName(raw: string): string {
@@ -132,6 +133,7 @@ export default function sessionRename(pi: ExtensionAPI) {
 		description:
 			"Set the display name of the current session, as shown in the session list. " +
 			"Use a concise title (3 to 8 words) summarising the topic of the conversation.",
+		promptSnippet: "Name or rename the current session",
 		promptGuidelines: [
 			`Use \`${TOOL_NAME}\` to keep the session's name a short summary of what the conversation is about. Name it after the user's first couple of prompts, once the topic is clear. As the conversation goes on, update the name occasionally so it still describes the topic accurately; don't rename for brief detours. Do this quietly, alongside your normal work, without mentioning it unless asked.`,
 			`Session names: 3 to 8 words summarising the topic; keep ticket ids, project names and technical terms; avoid generic titles like "Coding session"; no quotes or trailing punctuation.`,
@@ -143,16 +145,12 @@ export default function sessionRename(pi: ExtensionAPI) {
 			const branch = ctx.sessionManager.getBranch();
 			const previous = pi.getSessionName();
 
-			const requested = isRenameRequested(branch);
 			const manual = previous !== undefined && isManuallyNamed(branch);
-			if (manual && !requested) {
+			if (manual && !isRenameRequested(branch)) {
 				throw new Error(
 					`The user named this session "${previous}"; leave it. If it no longer fits, you may suggest a new name to the user.`,
 				);
 			}
-
-			const cooldown = cooldownMessage(branch);
-			if (cooldown) throw new Error(`${cooldown}; try again later if it still seems needed.`);
 
 			const name = normalizeName(params.name);
 			if (name.length < 3) throw new Error("Name is empty or too short");
@@ -182,12 +180,6 @@ export default function sessionRename(pi: ExtensionAPI) {
 		description: "Ask the model to (re)name this session now (optional hint: /auto-session-name <hint>)",
 		handler: async (args, ctx) => {
 			if (!enabled) return;
-			const cooldown = cooldownMessage(ctx.sessionManager.getBranch());
-			if (cooldown) {
-				ctx.ui.notify(`${cooldown}; not renaming yet.`, "warning");
-				return;
-			}
-
 			const hint = args.trim();
 			const text =
 				`The user asked you to name this session now: call \`${TOOL_NAME}\` with a name summarising the conversation so far, then stop.` +
@@ -197,6 +189,27 @@ export default function sessionRename(pi: ExtensionAPI) {
 				{ triggerTurn: true, ...(ctx.isIdle() ? {} : { deliverAs: "followUp" as const }) },
 			);
 		},
+	});
+
+	pi.on("before_agent_start", (_event, ctx) => {
+		if (!enabled) return;
+		const branch = ctx.sessionManager.getBranch();
+		if (isManuallyNamed(branch)) return;
+
+		if (!isNudgePrompt(countPrompts(branch) + 1)) return;
+
+		const name = pi.getSessionName();
+		const action = name
+			? `This session is named "${name}". If that no longer describes the topic, rename it`
+			: "This session has no name yet. If the topic is clear, name it";
+		return {
+			message: {
+				customType: NUDGE_MESSAGE_TYPE,
+				content: `Session-naming reminder: ${action} with \`${TOOL_NAME}\`, alongside your normal work; otherwise ignore this.`,
+				display: false,
+				details: { name } satisfies NameMessageDetails,
+			},
+		};
 	});
 
 	pi.on("session_start", async (_event, ctx: ExtensionContext) => {
