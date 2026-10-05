@@ -9,7 +9,8 @@
  * static, and name changes reach the model only as messages appended to the transcript.
  *
  * - After a rename, the tool refuses further renames for a few more prompts.
- * - A name set by the user (e.g. `/name`) is left alone until the user clears it.
+ * - A name set by the user (e.g. `/name`) is left alone until the user clears it, or runs
+ *   `/auto-session-name`, which asks the model to (re)name the session now.
  * - The tool is hidden in sessions without a UI, such as sub-agents.
  */
 
@@ -19,6 +20,7 @@ import { Type } from "typebox";
 const TOOL_NAME = "set_session_name";
 const NAME_MESSAGE_TYPE = "session-name";
 const MANUAL_ENTRY_TYPE = "session-name-manual";
+const REQUEST_MESSAGE_TYPE = "session-name-request";
 const PROMPTS_BETWEEN_RENAMES = 5;
 const MAX_NAME_CHARS = 80;
 
@@ -60,6 +62,22 @@ function countPrompts(branch: SessionEntry[], since?: (entry: SessionEntry) => b
 
 function hasRenamed(branch: SessionEntry[]): boolean {
 	return branch.some(isRenameResult);
+}
+
+function cooldownMessage(branch: SessionEntry[]): string | undefined {
+	if (!hasRenamed(branch)) return undefined;
+	const prompts = countPrompts(branch, isRenameResult);
+	if (prompts >= PROMPTS_BETWEEN_RENAMES) return undefined;
+	return `Renamed too recently (${prompts} of ${PROMPTS_BETWEEN_RENAMES} user prompts since)`;
+}
+
+function isRenameRequested(branch: SessionEntry[]): boolean {
+	for (let i = branch.length - 1; i >= 0; i--) {
+		const entry = branch[i]!;
+		if (entry.type === "custom_message" && entry.customType === REQUEST_MESSAGE_TYPE) return true;
+		if (isRenameResult(entry) || isUserPrompt(entry)) return false;
+	}
+	return false;
 }
 
 function isManuallyNamed(branch: SessionEntry[]): boolean {
@@ -113,10 +131,10 @@ export default function sessionRename(pi: ExtensionAPI) {
 		label: "Set session name",
 		description:
 			"Set the display name of the current session, as shown in the session list. " +
-			"Use a concise title (3 to 8 words) describing the concrete task or outcome.",
+			"Use a concise title (3 to 8 words) summarising the topic of the conversation.",
 		promptGuidelines: [
-			`Once you understand what this session is really about (not before a few exchanges), name it with \`${TOOL_NAME}\`. Later, rename it only if its focus has clearly and lastingly moved away from the current name; don't rename for detours. Do this quietly, alongside your normal work, without mentioning it unless asked.`,
-			`Session names: 3 to 8 words, describing the concrete task or outcome; keep ticket ids, project names and technical terms; avoid generic titles like "Coding session"; no quotes or trailing punctuation.`,
+			`Use \`${TOOL_NAME}\` to keep the session's name a short summary of what the conversation is about. Name it after the user's first couple of prompts, once the topic is clear. As the conversation goes on, update the name occasionally so it still describes the topic accurately; don't rename for brief detours. Do this quietly, alongside your normal work, without mentioning it unless asked.`,
+			`Session names: 3 to 8 words summarising the topic; keep ticket ids, project names and technical terms; avoid generic titles like "Coding session"; no quotes or trailing punctuation.`,
 		],
 		parameters: Type.Object({
 			name: Type.String({ description: "The new session name" }),
@@ -125,20 +143,16 @@ export default function sessionRename(pi: ExtensionAPI) {
 			const branch = ctx.sessionManager.getBranch();
 			const previous = pi.getSessionName();
 
-			if (previous && isManuallyNamed(branch)) {
+			const requested = isRenameRequested(branch);
+			const manual = previous !== undefined && isManuallyNamed(branch);
+			if (manual && !requested) {
 				throw new Error(
 					`The user named this session "${previous}"; leave it. If it no longer fits, you may suggest a new name to the user.`,
 				);
 			}
 
-			if (hasRenamed(branch)) {
-				const prompts = countPrompts(branch, isRenameResult);
-				if (prompts < PROMPTS_BETWEEN_RENAMES) {
-					throw new Error(
-						`Renamed too recently (${prompts} of ${PROMPTS_BETWEEN_RENAMES} user prompts since); try again later if it still seems needed.`,
-					);
-				}
-			}
+			const cooldown = cooldownMessage(branch);
+			if (cooldown) throw new Error(`${cooldown}; try again later if it still seems needed.`);
 
 			const name = normalizeName(params.name);
 			if (name.length < 3) throw new Error("Name is empty or too short");
@@ -150,6 +164,7 @@ export default function sessionRename(pi: ExtensionAPI) {
 			}
 
 			rename(name);
+			if (manual) pi.appendEntry<ManualEntryData>(MANUAL_ENTRY_TYPE, { manual: false });
 			if (ctx.hasUI) ctx.ui.notify(`Session named: ${name}`, "info");
 			return {
 				content: [
@@ -160,6 +175,27 @@ export default function sessionRename(pi: ExtensionAPI) {
 				],
 				details: { previous, name } satisfies RenameDetails,
 			};
+		},
+	});
+
+	pi.registerCommand("auto-session-name", {
+		description: "Ask the model to (re)name this session now (optional hint: /auto-session-name <hint>)",
+		handler: async (args, ctx) => {
+			if (!enabled) return;
+			const cooldown = cooldownMessage(ctx.sessionManager.getBranch());
+			if (cooldown) {
+				ctx.ui.notify(`${cooldown}; not renaming yet.`, "warning");
+				return;
+			}
+
+			const hint = args.trim();
+			const text =
+				`The user asked you to name this session now: call \`${TOOL_NAME}\` with a name summarising the conversation so far, then stop.` +
+				(hint ? ` Their hint: ${hint}` : "");
+			pi.sendMessage(
+				{ customType: REQUEST_MESSAGE_TYPE, content: text, display: false },
+				{ triggerTurn: true, ...(ctx.isIdle() ? {} : { deliverAs: "followUp" as const }) },
+			);
 		},
 	});
 
