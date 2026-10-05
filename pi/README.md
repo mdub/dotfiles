@@ -10,6 +10,7 @@ Run `~/.dotfiles/pi/setup` to symlink the theme and extensions into `~/.pi/agent
 - `extensions/bash-box.ts` — draws a rounded box around bash tool calls, with an `── Output` divider and a wall-time footer. Uses `renderShell: "self"` plus `renderCall`/`renderResult`; execution delegates to the built-in bash tool. Configurable under `bashBox` in settings (`enabled`, `border`, `previewLines`).
 - `extensions/permission-gate.ts` — confirms before running dangerous bash commands.
 - `extensions/agents-local.ts` — loads uncommitted `AGENTS.local.md` files into the project context, next to the `AGENTS.md` files pi already loads. It checks every directory from the working directory up to the git repository root, and re-reads the files before each agent run.
+- `extensions/session-rename.ts` — gives the main model a `set_session_name` tool, with prompt guidelines to name the session once its subject is clear and rename it only when the focus has clearly moved. The tool and guidelines are static, so naming doesn't break the prompt cache. It leaves names set with `/name` alone, refuses a rename within 5 user prompts of the last one, and hides itself in sessions without a UI, such as sub-agents.
 
 ## Not here, on purpose
 
@@ -20,7 +21,6 @@ pi install npm:pi-web-access          # web search, fetch, GitHub repos, PDFs
 pi install npm:pi-lens                # LSP diagnostics, linters, ast-grep
 pi install npm:pi-hashline-edit-pro   # anchor-based read/replace/insert
 pi install npm:pi-powerline-footer    # powerline status bar
-pi install npm:pi-auto-session-name   # names sessions automatically
 ```
 
 Then set `"theme": "mw-dark"` (or pick it in `/settings`).
