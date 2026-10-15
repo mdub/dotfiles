@@ -41,14 +41,23 @@ export default function (pi: ExtensionAPI) {
 			`Context at ${formatTokens(usage.tokens)} of ${formatTokens(usage.contextWindow)} reached the ${formatTokens(limit)} limit; compacting…`,
 			"info",
 		);
+		// These callbacks can outlive ctx (session switch, or print mode exiting
+		// mid-compaction), and touching a stale ctx throws.
+		const ifCurrent = (fn: () => void) => {
+			try {
+				fn();
+			} catch {}
+		};
 		ctx.compact({
 			onComplete: () => {
 				compacting = false;
-				if (resume && !ctx.hasPendingMessages()) pi.sendUserMessage(RESUME_PROMPT, { deliverAs: "followUp" });
+				ifCurrent(() => {
+					if (resume && !ctx.hasPendingMessages()) pi.sendUserMessage(RESUME_PROMPT, { deliverAs: "followUp" });
+				});
 			},
 			onError: (error) => {
 				compacting = false;
-				ctx.ui.notify(`mw-auto-compact: ${error.message}`, "error");
+				ifCurrent(() => ctx.ui.notify(`mw-auto-compact: ${error.message}`, "error"));
 			},
 		});
 	});
