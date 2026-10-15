@@ -37,6 +37,11 @@ export default function (pi: ExtensionAPI) {
 		const resume = event.toolResults.length > 0;
 
 		compacting = true;
+		pi.appendEntry("mw-auto-compact", {
+			tokens: usage.tokens,
+			contextWindow: usage.contextWindow,
+			limit: Math.floor(limit),
+		});
 		ctx.ui.notify(
 			`Context at ${formatTokens(usage.tokens)} of ${formatTokens(usage.contextWindow)} reached the ${formatTokens(limit)} limit; compacting…`,
 			"info",
