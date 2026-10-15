@@ -2,11 +2,11 @@
 
 Config for [pi](https://pi.dev), a terminal coding agent.
 
-Run `~/.dotfiles/pi/setup` to symlink the theme and extensions into `~/.pi/agent/`.
+This directory is a local [pi package](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md). Run `~/.dotfiles/pi/setup` to register it with `pi install`. Pi loads the theme and extensions in place, so edits take effect on the next `/reload`, and new extensions are picked up without re-running setup.
 
 ## What's here
 
-- `themes/mw-dark.json` — GitHub dark theme, ported from [oh-my-pi](https://github.com/can1357/oh-my-pi). Carries pi's 51 required colour tokens plus the optional four, and keeps oh-my-pi's non-standard `statusLine*` tokens. Pi's schema ignores unknown tokens but still compiles them into its colour map, so an extension can read them via `theme.fg("statusLineModel", …)`. They land in the *foreground* map only — for a background, rewrite the SGR parameter: `getFgAnsi(t).replace("\x1b[38;", "\x1b[48;")`.
+- `themes/mw-dark.json` — GitHub dark theme, ported from [oh-my-pi](https://github.com/can1357/oh-my-pi). Carries only tokens in pi's [theme schema](https://pi.dev/schemas/theme.schema.json): since pi 1.2.0, unknown colour tokens (such as oh-my-pi's `statusLine*`) make the theme invalid.
 - `extensions/bash-box.ts` — draws a rounded box around bash tool calls, with an `── Output` divider and a wall-time footer. Uses `renderShell: "self"` plus `renderCall`/`renderResult`; execution delegates to the built-in bash tool. Configurable under `bashBox` in settings (`enabled`, `border`, `previewLines`).
 - `extensions/permission-gate.ts` — confirms before running dangerous bash commands.
 - `extensions/agents-local.ts` — loads uncommitted `AGENTS.local.md` files into the project context, next to the `AGENTS.md` files pi already loads. It checks every directory from the working directory up to the git repository root, and re-reads the files before each agent run.
