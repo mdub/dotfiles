@@ -1,5 +1,5 @@
 /**
- * Session Rename Extension
+ * In-session Auto-name Extension
  *
  * Gives the main model a `set_session_name` tool, so the session is named (and later
  * renamed) by the model that has the whole conversation in context, inside the normal
@@ -111,7 +111,7 @@ function normalizeName(raw: string): string {
 	return name;
 }
 
-export default function sessionRename(pi: ExtensionAPI) {
+export default function inSessionAutoName(pi: ExtensionAPI) {
 	let enabled = false;
 	let toolSetName: string | undefined;
 
