@@ -4,10 +4,9 @@
  * Loads uncommitted, checkout-local `AGENTS.local.md` files into the system prompt's
  * project context, alongside the `AGENTS.md` files pi already loads.
  *
- * Looks in every directory from the working directory up to the enclosing git
- * repository root (or just the working directory, outside a repository). Each file
- * is placed straight after the context file from the same directory, if there is
- * one, so it reads as an addendum to it.
+ * Looks in every directory from the filesystem root down to the working directory,
+ * matching how pi finds `AGENTS.md`. Each file is placed straight after the context
+ * file from the same directory, if there is one, so it reads as an addendum to it.
  *
  * Files are re-read before each agent run, so edits apply without a restart.
  *
@@ -15,7 +14,7 @@
  * found at session start are announced in a separate notification.
  */
 
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -27,9 +26,8 @@ function searchDirs(cwd: string): string[] {
 	let dir = resolve(cwd);
 	while (true) {
 		dirs.push(dir);
-		if (existsSync(join(dir, ".git"))) return dirs.reverse();
 		const parent = dirname(dir);
-		if (parent === dir) return [resolve(cwd)];
+		if (parent === dir) return dirs.toReversed();
 		dir = parent;
 	}
 }
