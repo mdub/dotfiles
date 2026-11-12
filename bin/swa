@@ -1,3 +1,15 @@
 #! /bin/sh
+#
+# Runs under mdub-dotfiles-ruby (Homebrew Ruby) rather than whatever Ruby is on $PATH:
+# a login shell's path_helper can put a different Ruby first, whose gem dir lacks the bundle.
+# If the bundle is incomplete (e.g. after a Ruby upgrade), install it first.
 
-BUNDLE_GEMFILE="$HOME/Code/github.com/mdub/swa/Gemfile" bundle exec swa "$@"
+DIR="$HOME/Code/github.com/mdub/swa"
+export BUNDLE_GEMFILE="$DIR/Gemfile"
+
+if ! mdub-dotfiles-ruby -rbundler/setup -e '' 2>/dev/null; then
+  echo "swa: installing gems for $(mdub-dotfiles-ruby -e 'print RUBY_DESCRIPTION')" >&2
+  mdub-dotfiles-ruby -e 'load Gem.bin_path("bundler", "bundle")' install --quiet >&2 || exit 1
+fi
+
+exec mdub-dotfiles-ruby -rbundler/setup "$DIR/exe/swa" "$@"
