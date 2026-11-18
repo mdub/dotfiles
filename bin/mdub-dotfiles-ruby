@@ -1,2 +1,8 @@
 #!/bin/sh
-exec /opt/homebrew/opt/ruby/bin/ruby "$@"
+# Run Homebrew's Ruby (macOS or Linuxbrew), falling back to whatever ruby is on PATH.
+for prefix in "$HOMEBREW_PREFIX" /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+  if [ -n "$prefix" ] && [ -x "$prefix/opt/ruby/bin/ruby" ]; then
+    exec "$prefix/opt/ruby/bin/ruby" "$@"
+  fi
+done
+exec ruby "$@"
